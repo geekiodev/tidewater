@@ -71,6 +71,77 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      clients: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          name: string;
+          website: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          workspace_id: string;
+          name: string;
+          website?: string | null;
+          created_by: string;
+        };
+        Update: {
+          name?: string;
+          website?: string | null;
+        };
+        Relationships: [];
+      };
+      contacts: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          client_id: string;
+          full_name: string;
+          email: string | null;
+          phone: string | null;
+          job_title: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          workspace_id: string;
+          client_id: string;
+          full_name: string;
+          email?: string | null;
+          phone?: string | null;
+          job_title?: string | null;
+        };
+        Update: {
+          full_name?: string;
+          email?: string | null;
+          phone?: string | null;
+          job_title?: string | null;
+        };
+        Relationships: [];
+      };
+      notes: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          client_id: string;
+          body: string;
+          author_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          workspace_id: string;
+          client_id: string;
+          body: string;
+          author_id: string;
+        };
+        Update: {
+          body?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {

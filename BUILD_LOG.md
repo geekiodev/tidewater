@@ -54,3 +54,28 @@ Running log of what the build agent did for each prompt in the prompt pack, incl
 - `src/lib/database.types.ts` is hand-written, because `supabase gen types` needs the Docker stack. Regenerate it once the stack runs.
 - Invitation tokens travel in the URL path (`/invite/<token>`), so they can appear in server access logs. They're single-use, expire after 7 days, and are stored only as hashes.
 - Migration checked by applying it to the local Postgres 16 with the test shim, plus a manual RLS smoke test (user A sees only workspace A and can rename only it; `anon` gets permission denied). Automated tests come in Prompt 5.
+
+## Prompt 2: Contacts and notes
+
+**Built**
+- Migration `20261019000200_clients_contacts_notes.sql`: `clients`, `contacts` (name, email, phone, job title), `notes`.
+  - RLS on all three, limited to workspace members.
+  - Contacts and notes reference their client through a **composite foreign key `(client_id, workspace_id)`**, so a row can't be attached to another workspace's client even if the app passes a foreign client id. RLS alone only checks the row's own `workspace_id`, so this closes a cross-tenant gap.
+  - Column-level UPDATE grants, so `workspace_id`, `client_id`, `created_by` and `author_id` can't be changed after insert.
+  - Length limits as CHECK constraints, mirroring the app's schemas.
+  - Notes: any member can read and add; only the author can edit; the author or the workspace owner can delete.
+- Server actions (`src/app/(app)/clients/actions.ts`) for create, update and delete of clients, contacts and notes. Each one re-checks the session, gets the workspace on the server, validates with zod (`src/lib/validation/crm.ts`) and writes through the user's RLS-bound client, with an explicit `workspace_id` filter as well.
+- Limits: client name 200, website 300 (must be http/https, so `javascript:` links can't be stored), contact name 200, email 254, phone 50, job title 200, note 10,000 characters, search 100. Lists are paginated: default 25, **maximum 50** per page, maximum page 1000. Out-of-range values fall back to the default rather than erroring.
+- Pages: `/clients` (search, paginated list, add form) and `/clients/[id]` (contacts and notes, each paginated; inline edit; delete with confirmation; client details). The default landing page after login is now `/clients`. Empty states say what to do next; there's no sample data. Note text is rendered as plain text.
+- Error reporting (`src/lib/errors/report.ts`, `src/instrumentation.ts`): one reporter for caught errors and for uncaught server errors (`onRequestError`). It writes scrubbed JSON to stderr:
+  - values under personal-data keys are redacted;
+  - email addresses, phone-like numbers, quoted values and Postgres `Key (...)=(...)` details are stripped from messages and stacks;
+  - query strings are dropped from request paths, and objects aren't serialised.
+  - `setErrorSink()` is the hook for a hosted service later.
+  - Users only see generic messages (`src/lib/db-errors.ts`, `src/app/error.tsx`).
+
+**Simplified / not done**
+- The error sink is stderr only; no hosted error tracker is wired up (no credentials). The scrubbing is pattern-based, so it **can miss personal data** in unexpected formats (e.g. a name inside an unquoted error message). It also over-redacts some things, such as dates and IP addresses, which look like phone numbers. Next.js's own dev-server error overlay and its default console logging of uncaught errors are outside this reporter.
+- No JSON REST API for clients/contacts/notes. Everything goes through server-rendered pages and server actions; the page-size caps apply to those list queries.
+- No contact search, sorting options, or move-contact-to-another-client. Deleting a client deletes its contacts and notes (cascade), with a confirmation prompt.
+- Migration applied to local Postgres with the shim; full RLS isolation tests come in Prompt 5. The UI has not been clicked through against a live Supabase (not available here).

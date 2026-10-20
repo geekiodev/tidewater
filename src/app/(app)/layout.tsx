@@ -13,6 +13,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <div className="topbar-inner">
           <strong>{ctx.workspace.name}</strong>
           <nav>
+            <Link href="/clients">Clients</Link>
             <Link href="/settings/team">Team</Link>
           </nav>
           <span className="small muted">{ctx.user.email}</span>
