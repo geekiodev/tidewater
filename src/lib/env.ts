@@ -42,7 +42,7 @@ const stripeSchema = z.object({
 
 const anthropicSchema = z.object({
   ANTHROPIC_API_KEY: z.string().min(10),
-  ANTHROPIC_MODEL: z.string().min(1).default("claude-haiku-4-5"),
+  ANTHROPIC_MODEL: z.string().min(1).max(100).default("claude-haiku-5-5"),
   AI_MONTHLY_BRIEF_LIMIT: z.coerce.number().int().min(0).max(100000).default(200),
 });
 

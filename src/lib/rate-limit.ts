@@ -10,6 +10,8 @@ export const RATE_LIMITS = {
   loginPerIp: { name: "login:ip", limit: 20, windowSeconds: 15 * 60 },
   loginPerEmail: { name: "login:email", limit: 8, windowSeconds: 15 * 60 },
   signupPerIp: { name: "signup:ip", limit: 5, windowSeconds: 60 * 60 },
+  briefPerUser: { name: "brief:user", limit: 5, windowSeconds: 60 },
+  briefPerWorkspace: { name: "brief:workspace", limit: 60, windowSeconds: 60 * 60 },
 } satisfies Record<string, RateLimitRule>;
 
 /** Identifiers are hashed so the rate-limit table never stores emails or IPs. */

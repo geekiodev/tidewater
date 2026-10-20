@@ -18,6 +18,7 @@ import {
   updateContactAction,
   updateNoteAction,
 } from "../actions";
+import { BriefPanel } from "./brief-panel";
 
 const pageParam = z.coerce.number().int().min(1).max(LIMITS.maxPage).catch(1);
 const CONTACTS_PAGE_SIZE = LIMITS.maxPageSize;
@@ -83,6 +84,8 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           </a>
         </p>
       ) : null}
+
+      <BriefPanel clientId={id} enabled={ctx.active} />
 
       <section className="card">
         <h2>Contacts</h2>

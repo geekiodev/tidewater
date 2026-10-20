@@ -7,7 +7,7 @@ Running log of what the build agent did for each prompt in the prompt pack, incl
 - **No Docker images.** The Docker daemon starts, but pulls from Docker Hub / ECR are refused by the network proxy, so `npx supabase start` (which needs Docker images) **cannot run here**. Nothing in this build has been run against the real Supabase stack (GoTrue auth, PostgREST, Supabase's own Postgres image).
 - **Real Postgres is available.** The local PostgreSQL 16 cluster was started and is used to apply the migrations and run the database tests. Supabase's `auth` schema, roles and `auth.uid()` don't exist in plain Postgres, so tests load a small shim (`tests/db/supabase-shim.sql`) that recreates just those pieces. Supabase local uses Postgres 17; tests here ran on 16.
 - **No credentials.** No Stripe, Supabase or Anthropic keys exist here. Only dummy values appear, in `.env.example`. Nothing has been called against Stripe or Anthropic.
-- **No docs access.** The Anthropic docs couldn't be fetched, so the model ID is an environment variable (`ANTHROPIC_MODEL`, default `claude-haiku-4-5`). Confirm it against current docs before launch.
+- **No docs access.** The Anthropic docs couldn't be fetched, so the model ID is an environment variable (`ANTHROPIC_MODEL`). The default, `claude-haiku-5-5`, was taken from the model list in the installed `@anthropic-ai/sdk` (0.135.0) types. Confirm it against current docs and pricing before launch.
 
 ## Prompt 0: Context
 
@@ -118,3 +118,31 @@ Running log of what the build agent did for each prompt in the prompt pack, incl
 - Plan limits (e.g. seats for Starter vs Team) aren't implemented; the two plans differ only in price.
 - In development the CSP allows `'unsafe-eval'` (React dev tooling) and inline styles. `upgrade-insecure-requests` is sent only when `APP_URL` is https.
 - If a checkout completes but the webhook can't be delivered (e.g. local dev without `stripe listen`), the workspace stays inactive. The README explains how to forward webhooks locally.
+
+## Prompt 4: Account brief (AI assistant)
+
+**Built**
+- "Brief me" panel on every client page (`src/app/(app)/clients/[id]/brief-panel.tsx`). It calls `POST /api/clients/[id]/brief` and shows a relationship summary and a suggested follow-up email (subject and body) with a "Copy email" button.
+- Endpoint (`src/app/api/clients/[id]/brief/route.ts`), in order:
+  - checks session, workspace and active subscription on the server;
+  - rate-limits: 5 briefs per minute per user, 60 per hour per workspace;
+  - loads the client's data with the user's RLS-bound client, scoped to their workspace;
+  - reserves one brief against the **monthly workspace cap** (`AI_MONTHLY_BRIEF_LIMIT`, default 200);
+  - calls the model;
+  - settles the usage: records tokens, and refunds the reservation if the call failed.
+- Model call (`src/lib/ai/anthropic.ts`): server-only (the `server-only` import makes a client import a build error). The key comes from server env. **25 s timeout**, **700 max output tokens**, 1 retry, no tools.
+- Data minimisation (`selectBriefFields` in `src/lib/ai/brief.ts`): only the client name, up to 20 contacts' **names and job titles**, and up to 15 recent notes with dates are sent. Each note is capped at 1,500 characters, with 12,000 in total. **No emails, phone numbers, user ids or author info** are sent.
+- Prompt-injection handling:
+  - Instructions live only in the system prompt.
+  - CRM data goes in the user turn as JSON inside `<crm_data>` tags and is explicitly labelled untrusted. `<` and `>` are escaped so a note can't close the tag.
+  - The model is told never to follow instructions found in the data.
+  - Output is stripped of control characters, capped at 6,000 characters, parsed into three plain strings, and **rendered only as React text nodes**: no `dangerouslySetInnerHTML`, Markdown or auto-linking.
+  - The model has no tools and nothing acts on its output.
+- Migration `20261019000400_ai_usage.sql`: `ai_usage` (per workspace per month: briefs and tokens), readable by members. `reserve_ai_brief` (atomic, so concurrent requests can't overshoot the cap) and `settle_ai_brief` are **service_role only**. If `authenticated` could call them, a user could pass their own limit through the Data API.
+
+**Simplified / not done**
+- **Never called against the real Anthropic API** (no key). Prompt building, injection encoding and output parsing are covered by unit tests in Prompt 5. Model behaviour on adversarial notes is not tested, and prompt-injection defences reduce the risk but don't eliminate it. Here the impact is limited to misleading text shown to the user, because the model has no tools and its output is only displayed.
+- Sending note text to Anthropic is a new data flow to a subprocessor. It needs to be in the privacy policy, DPA/subprocessor list and security questionnaire answers. The panel tells users what is sent.
+- Usage isn't shown in the UI yet (the data is in `ai_usage`). The cap counts briefs, not tokens; tokens are recorded for later cost tracking.
+- Briefs aren't stored. Each click is a fresh call that counts against the cap.
+- The cap is reserved before the call and refunded on failure. If the process dies mid-call, the reservation isn't refunded (it errs toward under-use).

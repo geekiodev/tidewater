@@ -148,6 +148,19 @@ export type Database = {
         };
         Relationships: [];
       };
+      ai_usage: {
+        Row: {
+          workspace_id: string;
+          month: string;
+          briefs: number;
+          input_tokens: number;
+          output_tokens: number;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {
@@ -176,6 +189,14 @@ export type Database = {
           p_current_period_end: string | null;
         };
         Returns: string;
+      };
+      reserve_ai_brief: {
+        Args: { p_workspace_id: string; p_monthly_limit: number };
+        Returns: boolean;
+      };
+      settle_ai_brief: {
+        Args: { p_workspace_id: string; p_succeeded: boolean; p_input_tokens: number; p_output_tokens: number };
+        Returns: undefined;
       };
       rate_limit_hit: {
         Args: { p_bucket: string; p_limit: number; p_window_seconds: number };
