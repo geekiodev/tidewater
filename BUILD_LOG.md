@@ -79,3 +79,42 @@ Running log of what the build agent did for each prompt in the prompt pack, incl
 - No JSON REST API for clients/contacts/notes. Everything goes through server-rendered pages and server actions; the page-size caps apply to those list queries.
 - No contact search, sorting options, or move-contact-to-another-client. Deleting a client deletes its contacts and notes (cascade), with a confirmation prompt.
 - Migration applied to local Postgres with the shim; full RLS isolation tests come in Prompt 5. The UI has not been clicked through against a live Supabase (not available here).
+
+## Prompt 3: Billing
+
+**Built**
+- Migration `20261019000300_billing.sql`:
+  - Subscription columns on `workspaces`: Stripe customer and subscription ids, `plan`, `subscription_status`, `current_period_end`, and `billing_event_at`, which guards event ordering. The browser role can read these but can't write them (only `name` is UPDATE-granted).
+  - `private.stripe_events` records processed event ids.
+  - `apply_stripe_event(...)`, callable only by `service_role`, records the event id and applies the change in **one transaction**. A redelivered event returns `duplicate` and changes nothing. It also:
+    - ignores older events that arrive after newer ones (`stale`);
+    - won't let an update about an old subscription cancel the current one;
+    - rejects a customer id that doesn't match the workspace's (`customer_mismatch`).
+  - The RLS **insert** policies on clients, contacts and notes now also require `private.workspace_is_active()`, i.e. status `active` or `trialing` with a known plan. Inactive workspaces can still read, edit and delete, but can't create, and that's enforced in the database.
+- Plans (`src/lib/billing/plans.ts`): `starter` and `team`. The browser sends only the plan key, validated against an enum; the Stripe price id comes from server env vars. Promotion codes are disabled, and no amount or discount is read from the request.
+- Checkout and Billing Portal (`/settings/billing`, owner only). The Stripe customer id is read from the database. `workspace_id` goes into session metadata, `client_reference_id` and subscription metadata, all set server-side.
+- Webhook `POST /api/stripe/webhook`:
+  - The logic lives in `src/lib/billing/webhook.ts`, kept free of framework code so it can be tested.
+  - The signature is verified with `stripe.webhooks.constructEvent` on the raw body for **every** event, before anything is parsed (default 5-minute timestamp tolerance). Payloads over 512 KB are rejected.
+  - Handles `checkout.session.completed` (links the customer) and `customer.subscription.created/updated/deleted`.
+  - If the store fails, it returns 500 so Stripe retries; the transaction rolled back, so the retry is safe.
+- App-level gating: create actions return a friendly message when the subscription isn't active, and a banner in the app layout explains the read-only state.
+- Security headers:
+  - The proxy sets a **nonce-based CSP** on every response: no `unsafe-inline` scripts in production, `frame-ancestors 'none'`, `connect-src 'self'`, and `form-action` limited to self plus Stripe Checkout/Portal.
+  - Also sent: **HSTS** (2 years, includeSubDomains, preload; not in dev), `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, and COOP/CORP. Static assets get the non-CSP headers from `next.config.ts`.
+  - The root layout reads `headers()` so every page renders dynamically and gets a fresh nonce.
+- CSRF (`src/lib/security/csrf.ts`, enforced in the proxy for every non-GET request): the `Origin` must match the app's origin, falling back to `Sec-Fetch-Site: same-origin`, and requests with neither are rejected. This is on top of SameSite=Lax session cookies and Next's own Origin/Host check on Server Actions. Only the Stripe webhook is exempt, because its signature authenticates it.
+- Smoke-tested on a production build:
+  - CSP, HSTS and the other headers are present, and script tags carry a per-request nonce.
+  - A cross-site POST returns 403, and so does a POST without an Origin header.
+  - The webhook returns 400 for a missing or invalid signature.
+
+**Simplified / not done**
+- **Nothing has been run against Stripe.** No test-mode keys are available, so creating checkout and portal sessions is untested. Signature verification and duplicate handling are tested locally in Prompt 5 with Stripe's own test-signature helper.
+- Prices are shown only at checkout; the billing page doesn't fetch amounts from Stripe.
+- No free trial. A brand-new workspace can't create records until it subscribes. This follows "without an active subscription" literally; reconsider for onboarding.
+- `past_due` counts as **inactive** (strict reading). Many SaaS products keep access during Stripe's retry window; this is a product decision.
+- Inviting teammates isn't blocked for inactive workspaces (invitations aren't CRM records).
+- Plan limits (e.g. seats for Starter vs Team) aren't implemented; the two plans differ only in price.
+- In development the CSP allows `'unsafe-eval'` (React dev tooling) and inline styles. `upgrade-insecure-requests` is sent only when `APP_URL` is https.
+- If a checkout completes but the webhook can't be delivered (e.g. local dev without `stripe listen`), the workspace stays inactive. The README explains how to forward webhooks locally.

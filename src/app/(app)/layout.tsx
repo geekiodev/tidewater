@@ -15,6 +15,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <nav>
             <Link href="/clients">Clients</Link>
             <Link href="/settings/team">Team</Link>
+            <Link href="/settings/billing">Billing</Link>
           </nav>
           <span className="small muted">{ctx.user.email}</span>
           <form action={logoutAction}>
@@ -24,6 +25,14 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           </form>
         </div>
       </header>
+      {!ctx.active ? (
+        <div className="topbar-inner">
+          <p className="banner grow">
+            No active subscription: you can view your data but not add new records or use the account brief.{" "}
+            {ctx.role === "owner" ? <Link href="/settings/billing">Choose a plan</Link> : "Ask the workspace owner to subscribe."}
+          </p>
+        </div>
+      ) : null}
       {children}
     </>
   );

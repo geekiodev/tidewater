@@ -23,6 +23,12 @@ export type Database = {
           id: string;
           name: string;
           created_at: string;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          plan: "starter" | "team" | null;
+          subscription_status: string;
+          current_period_end: string | null;
+          billing_event_at: string | null;
         };
         Insert: never;
         Update: {
@@ -156,6 +162,20 @@ export type Database = {
       list_workspace_members: {
         Args: Record<string, never>;
         Returns: { user_id: string; email: string; role: WorkspaceRole; joined_at: string }[];
+      };
+      apply_stripe_event: {
+        Args: {
+          p_event_id: string;
+          p_event_type: string;
+          p_event_created: string;
+          p_workspace_id: string | null;
+          p_customer_id: string | null;
+          p_subscription_id: string | null;
+          p_status: string | null;
+          p_plan: string | null;
+          p_current_period_end: string | null;
+        };
+        Returns: string;
       };
       rate_limit_hit: {
         Args: { p_bucket: string; p_limit: number; p_window_seconds: number };

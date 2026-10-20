@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -6,7 +7,10 @@ export const metadata: Metadata = {
   description: "A lightweight CRM for small agencies.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Reading request headers makes every page dynamically rendered, which the
+  // nonce-based CSP requires (a static page can't carry a per-request nonce).
+  await headers();
   return (
     <html lang="en">
       <body>{children}</body>

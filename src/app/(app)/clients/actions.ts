@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireWorkspace } from "@/lib/auth";
+import { requireWorkspace, SUBSCRIPTION_REQUIRED_MESSAGE } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { clientInputSchema, contactInputSchema, idSchema, noteInputSchema } from "@/lib/validation/crm";
 import { formDataToObject, zodFieldErrors, type FormState } from "@/lib/forms";
@@ -31,6 +31,8 @@ function parseId(value: FormDataEntryValue | null): string | null {
 
 export async function createClientAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const ctx = await requireWorkspace();
+  // Friendly early exit; the RLS insert policy enforces the same rule.
+  if (!ctx.active) return { error: SUBSCRIPTION_REQUIRED_MESSAGE };
   const parsed = clientInputSchema.safeParse(formDataToObject(formData, ["name", "website"]));
   if (!parsed.success) return { fieldErrors: zodFieldErrors(parsed.error) };
 
@@ -94,6 +96,8 @@ const CONTACT_FIELDS = ["fullName", "email", "phone", "jobTitle"] as const;
 
 export async function createContactAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const ctx = await requireWorkspace();
+  // Friendly early exit; the RLS insert policy enforces the same rule.
+  if (!ctx.active) return { error: SUBSCRIPTION_REQUIRED_MESSAGE };
   const clientId = parseId(formData.get("clientId"));
   if (!clientId) return NOT_FOUND;
   const parsed = contactInputSchema.safeParse(formDataToObject(formData, CONTACT_FIELDS));
@@ -166,6 +170,8 @@ export async function deleteContactAction(formData: FormData): Promise<void> {
 
 export async function createNoteAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const ctx = await requireWorkspace();
+  // Friendly early exit; the RLS insert policy enforces the same rule.
+  if (!ctx.active) return { error: SUBSCRIPTION_REQUIRED_MESSAGE };
   const clientId = parseId(formData.get("clientId"));
   if (!clientId) return NOT_FOUND;
   const parsed = noteInputSchema.safeParse(formDataToObject(formData, ["body"]));

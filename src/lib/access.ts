@@ -6,11 +6,14 @@
  */
 const PUBLIC_PAGES = new Set(["/", "/login", "/signup"]);
 const PUBLIC_PREFIXES = ["/auth/callback"];
-const PUBLIC_API = new Set<string>();
+// Public API routes authenticate in other ways (e.g. Stripe signature).
+const PUBLIC_API = new Set<string>(["/api/stripe/webhook"]);
 
-export function isPublicPath(pathname: string): boolean {
+export function isPublicPath(pathname: string, opts: { apiOnly?: boolean } = {}): boolean {
   const path = pathname !== "/" ? pathname.replace(/\/+$/, "") : pathname;
-  if (PUBLIC_PAGES.has(path) || PUBLIC_API.has(path)) return true;
+  if (PUBLIC_API.has(path)) return true;
+  if (opts.apiOnly) return false;
+  if (PUBLIC_PAGES.has(path)) return true;
   return PUBLIC_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
 }
 
