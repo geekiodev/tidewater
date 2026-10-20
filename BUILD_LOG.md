@@ -146,3 +146,71 @@ Running log of what the build agent did for each prompt in the prompt pack, incl
 - Usage isn't shown in the UI yet (the data is in `ai_usage`). The cap counts briefs, not tokens; tokens are recorded for later cost tracking.
 - Briefs aren't stored. Each click is a fresh call that counts against the cap.
 - The cap is reserved before the call and refunded on failure. If the process dies mid-call, the reservation isn't refunded (it errs toward under-use).
+
+## Prompt 5: Tests, CI and handover
+
+**Built**
+- **Tests (vitest), 122 in total.**
+- **Database tests: 48, against real Postgres 16.** They run on the real migrations and RLS policies, not mocks. The global setup (`tests/db/global-setup.ts`) drops and recreates a `*_test` database, loads the Supabase shim, then applies every migration. Queries run as `anon`, `authenticated` (with JWT claims) or `service_role`, as PostgREST would run them.
+  - `tests/db/isolation.test.ts`, workspace isolation:
+    - A can't read B's clients, contacts, notes, invitations or AI usage.
+    - A's inserts into B's workspace are denied.
+    - Attaching a contact to B's client fails the composite FK.
+    - Updates and deletes aimed at B affect 0 rows.
+    - `workspace_id` can't be changed.
+  - `tests/db/isolation.test.ts`, access control:
+    - Owner vs member: renaming, invites, removals, self-promotion, note edit/delete rights.
+    - Billing columns can't be written from the browser role.
+    - `anon` reads nothing.
+    - Server-only functions and `private` tables are denied to signed-in users.
+  - `tests/db/isolation.test.ts`, invitations: wrong email, unconfirmed email, expired, single use, already in a workspace.
+  - `tests/db/isolation.test.ts`, login rate limiter: limit per window, independent buckets.
+  - `tests/db/billing.test.ts`, signature checks with the real Stripe SDK verifier and Stripe's test-signature helper: missing, wrong secret, tampered body, replayed old timestamp, garbage header.
+  - `tests/db/billing.test.ts`, event handling:
+    - A valid event activates the workspace.
+    - **The same event delivered twice is applied once**, including after an intervening event and with 3 concurrent deliveries.
+    - Stale out-of-order events, customer mismatch, unknown price and ignored event types are handled.
+    - A DB failure leaves no event record, so Stripe's retry is processed.
+  - `tests/db/billing.test.ts`, gating and quota:
+    - A cancelled workspace can read and edit but can't create clients, contacts or notes.
+    - The AI monthly cap, refunds, and a limit of 0.
+- **Unit tests: 74.**
+  - `tests/unit/access-control.test.ts` runs the real `proxy()`, with the Supabase `getUser` call stubbed. It checks:
+    - signed-out page requests redirect to `/login?next=…` and API requests get 401;
+    - signed-in requests pass, and a missing Supabase config fails closed;
+    - CSRF blocks, nonce CSP and security headers on every response;
+    - which paths are public, and open-redirect protection.
+  - `tests/unit/login.test.ts`: the login and sign-up server actions are rate-limited **before** the password check (per IP and per email), errors are generic, extra form fields (`role`, `workspace_id`) are ignored, and off-site `next` is ignored.
+  - `tests/unit/security-and-validation.test.ts`, `brief.test.ts`, `webhook-mapping.test.ts`:
+    - CSRF and CSP rules, schema size caps, page-size caps;
+    - PII scrubbing in error reports;
+    - plan mapping;
+    - AI payload minimisation and prompt-injection encoding.
+- **Mutation check:** making the clients SELECT policy `using (true)` and removing the duplicate-event guard made 5 DB tests fail, as they should. Both changes were reverted.
+- **Bug found and fixed while smoke-testing:** the CSRF check compared `Origin` with Next's `nextUrl.origin`, which Next normalises to `localhost`. Browsing via `http://127.0.0.1:3000` (Supabase's default `site_url`) would have had every form POST rejected with 403. The proxy now compares against the `Host` header the browser sent, plus `APP_URL`. Two regression tests were added, and it was re-verified on a production server.
+- `GET /api/health`: public. Returns `{status, checks: {app, database}}` with a 3 s DB probe, 200 or 503, and no versions or error details. Verified to return 503 `degraded` when the DB is unreachable.
+- CI `.github/workflows/ci.yml` runs on every PR and on pushes to main: `npm ci`, type check, lint (zero warnings), all tests with a Postgres 16 service container, production build, and `npm audit --omit=dev --audit-level=high`. Workflow permissions are `contents: read`. **No type or lint rules were disabled** anywhere.
+- `.github/dependabot.yml`: weekly npm (minor/patch grouped) and GitHub Actions updates.
+- `.github/pull_request_template.md` with a security checklist. `.github/CODEOWNERS` covers everything, with security-sensitive paths called out.
+- README finished: setup from a fresh clone, an env var table, local Stripe webhooks, running tests, architecture and security model, third-party data flows, and what's not built yet.
+
+**Simplified / not done / needs a human**
+- **CODEOWNERS has a placeholder owner** (`@tidewater-maintainers-placeholder`), because I don't know the founder's GitHub handle. It also only enforces review once branch protection on `main` has "Require a pull request" plus "Require review from Code Owners" turned on, which is a GitHub setting I can't apply from here.
+- **The CI workflow has not run on GitHub** (nothing was pushed). Every step it runs passed locally, with the same Postgres major version.
+- The DB tests use a **shim** in place of the real Supabase `auth` schema and PostgREST. They prove the SQL, RLS policies and grants, but not GoTrue behaviour, cookie handling, or PostgREST's exact role switching. Once Docker images are available, run the app end to end on `npx supabase start` and click through sign-up → confirm → invite → billing → brief.
+- No end-to-end browser tests (e.g. Playwright). The server actions that write CRM data are covered indirectly: the DB tests enforce the rules they rely on. Their own control flow isn't unit-tested beyond login and sign-up.
+- `npm test` fails fast with a clear message if `TEST_DATABASE_URL` isn't set (by design, so the DB tests can't be skipped by accident). `npm run test:unit` runs without a database.
+
+## Final check results (run on the final commit, from a clean `rm -rf node_modules .next && npm ci`)
+
+| Check | Command | Result |
+|---|---|---|
+| Install | `npm ci` | **Pass**. npm reports 5 high-severity advisories, all dev-only (see below) |
+| Type check | `npm run typecheck` | **Pass**, 0 errors |
+| Lint | `npm run lint` (`--max-warnings=0`) | **Pass**, 0 errors, 0 warnings |
+| Tests | `TEST_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/tidewater_test npm test` | **Pass**: 7 files, 122 tests (74 unit + 48 against real PostgreSQL 16.15 on the local cluster) |
+| Production build | `npm run build` | **Pass**: 13 routes, all dynamic, plus the proxy |
+| Audit (prod deps) | `npm audit --omit=dev` | **Pass**, 0 vulnerabilities |
+| Audit (all deps) | `npm audit` | 5 high, all in `braces` via `eslint-config-next` → `fast-glob` → `micromatch` (dev-only lint tooling). npm's only offered fix downgrades to eslint-config-next 14, which is incompatible, so it was left as is |
+
+Not run here: `npx supabase start` / `supabase db reset` (Docker image pulls are blocked), anything against Stripe or Anthropic (no credentials), and the GitHub Actions workflow (no remote). Environment: Node 22.22.0, npm 10.9.4, Next.js 16.4.2.

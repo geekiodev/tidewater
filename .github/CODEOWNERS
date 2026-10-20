@@ -1,0 +1,16 @@
+# Every change needs approval from a code owner.
+# Branch protection on `main` must have "Require review from Code Owners"
+# turned on for this to be enforced; that's a GitHub setting, not a file.
+#
+# REPLACE the placeholder below with the real GitHub user or team before
+# pushing. `@tidewater-maintainers-placeholder` is not a real account.
+
+*                       @tidewater-maintainers-placeholder
+
+# Security-sensitive areas (same owners for now; split out as the team grows)
+/supabase/migrations/   @tidewater-maintainers-placeholder
+/src/proxy.ts           @tidewater-maintainers-placeholder
+/src/lib/billing/       @tidewater-maintainers-placeholder
+/src/lib/ai/            @tidewater-maintainers-placeholder
+/src/lib/security/      @tidewater-maintainers-placeholder
+/.github/               @tidewater-maintainers-placeholder

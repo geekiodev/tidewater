@@ -16,7 +16,12 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isDev = process.env.NODE_ENV === "development";
 
-  const allowedOrigins = [request.nextUrl.origin];
+  // Allowed origins for state-changing requests: the host the browser actually
+  // addressed (the Host header; nextUrl.origin is normalised by Next and can
+  // differ, e.g. 127.0.0.1 vs localhost) and the configured APP_URL.
+  const allowedOrigins: string[] = [];
+  const host = request.headers.get("host");
+  if (host) allowedOrigins.push(`${request.nextUrl.protocol}//${host}`);
   if (process.env.APP_URL) {
     try {
       allowedOrigins.push(new URL(process.env.APP_URL).origin);

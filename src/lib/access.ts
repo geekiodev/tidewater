@@ -7,7 +7,7 @@
 const PUBLIC_PAGES = new Set(["/", "/login", "/signup"]);
 const PUBLIC_PREFIXES = ["/auth/callback"];
 // Public API routes authenticate in other ways (e.g. Stripe signature).
-const PUBLIC_API = new Set<string>(["/api/stripe/webhook"]);
+const PUBLIC_API = new Set<string>(["/api/stripe/webhook", "/api/health"]);
 
 export function isPublicPath(pathname: string, opts: { apiOnly?: boolean } = {}): boolean {
   const path = pathname !== "/" ? pathname.replace(/\/+$/, "") : pathname;
