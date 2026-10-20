@@ -208,3 +208,15 @@ pre.plain {
   max-width: 420px;
   margin: 48px auto;
 }
+
+.grow {
+  flex: 1;
+}
+
+.align-end {
+  align-self: flex-end;
+}
+
+.break-all {
+  word-break: break-all;
+}

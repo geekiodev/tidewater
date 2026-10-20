@@ -27,3 +27,30 @@ Running log of what the build agent did for each prompt in the prompt pack, incl
 
 **Known issues**
 - `npm audit` reports 5 high-severity advisories, all in the `braces`/`micromatch` chain under `eslint-config-next` (dev-only lint tooling, not shipped). The only "fix" npm offers is downgrading `eslint-config-next` to 14.x, which would break linting on Next 16. Left as is; revisit when upstream updates.
+
+## Prompt 1: Workspaces, accounts and access
+
+**Built**
+- Migration `supabase/migrations/20261019000100_workspaces_and_access.sql`: `workspaces`, `workspace_members` (role `owner`/`member`), `workspace_invitations`, and an internal `private.rate_limits` table.
+  - RLS enabled on every table. Membership checks go through `SECURITY DEFINER` helpers in a non-exposed `private` schema.
+  - Supabase's default "grant everything to anon/authenticated" is revoked; each table gets back only the privileges it needs. Owners can update only the workspace `name` column (column-level grant), so billing columns added later can't be edited from the browser.
+  - Workspace creation at sign-up is a trigger on `auth.users` that reads `workspace_name` from sign-up metadata and makes the user the owner.
+  - `accept_invitation(token)`: checks the token hash, expiry, and that the signed-in user's **confirmed** email matches the invitation. Role is always `member`.
+  - `rate_limit_hit(bucket, limit, window)`: fixed-window counter in Postgres, callable only by `service_role`.
+- Auth (`src/app/auth/actions.ts`, `/login`, `/signup`, `/auth/callback`): Supabase email/password with email confirmation (PKCE code exchange). Login errors are generic so the form doesn't reveal which emails have accounts.
+- Server-side access control in two layers:
+  - `src/proxy.ts` (Next 16's renamed middleware) verifies the session with `supabase.auth.getUser()` on every request. Signed-out page requests are redirected to `/login`; signed-out API requests get 401. Public: `/`, `/login`, `/signup`, `/auth/callback` (`src/lib/access.ts`).
+  - Every page, server action and route handler calls `requireUser` / `requireWorkspace` / `requireOwner` (`src/lib/auth.ts`) itself. Workspace and role are always read from the database for the verified user.
+- Rate limiting (`src/lib/rate-limit.ts`): login 20 per 15 min per IP and 8 per 15 min per email; sign-up 5 per hour per IP. Identifiers are SHA-256 hashed before storage. The limiter **fails closed**: if it can't reach the database, the attempt is refused.
+- Team page (`/settings/team`): list members; the owner can invite by email, revoke pending invitations and remove members. Onboarding page for a signed-in user with no workspace. Invitation accept page (`/invite/[token]`), which accepts only on POST.
+- `next` redirect parameters are restricted to same-site relative paths (open-redirect guard).
+- Smoke-tested with `next start` and no Supabase running: `/`, `/login`, `/signup` return 200; `/settings/team`, `/onboarding` and `/invite/...` redirect to login; `/api/*` returns 401.
+
+**Simplified / not done**
+- **Invitation emails aren't sent.** No email provider is configured, and Supabase's built-in mailer only sends auth emails. Instead, the owner is shown a one-time invite link to send themselves. The invitation is still bound to the invitee's email: only a signed-in user with that confirmed email can accept. Wiring a transactional email provider is a follow-up.
+- **One workspace per user** (unique constraint on `workspace_members.user_id`). This avoids a "current workspace" switcher, which would have to trust a workspace ID from the browser. Someone already in a workspace can't accept an invitation to another one.
+- No way to change a member's role, transfer ownership, delete a workspace, or for a member to leave. Owners can't remove themselves.
+- The IP used for rate limiting comes from `X-Forwarded-For`. That header can be spoofed unless the app sits behind a proxy that sets it, which is why there's also a per-email limit. Supabase Auth's own rate limits (`[auth.rate_limit]` in `config.toml`) also apply.
+- `src/lib/database.types.ts` is hand-written, because `supabase gen types` needs the Docker stack. Regenerate it once the stack runs.
+- Invitation tokens travel in the URL path (`/invite/<token>`), so they can appear in server access logs. They're single-use, expire after 7 days, and are stored only as hashes.
+- Migration checked by applying it to the local Postgres 16 with the test shim, plus a manual RLS smoke test (user A sees only workspace A and can rename only it; `anon` gets permission denied). Automated tests come in Prompt 5.
