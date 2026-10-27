@@ -1,0 +1,27 @@
+Tidewater Lab 1 baseline at commit 70c8ac6, 2026-10-27T03:28:05Z
+G1.1 secrets in git history        none found
+G1.1 agent instruction files       1 file(s), 0 suspicious line(s)
+G1.1 tracked .env files            .env.example 
+G1.4 npm ci                        exit 0
+G2.7 type check                    exit 0
+G2.7 lint (zero warnings)          exit 0
+G3.2 tests (unit + real DB)        exit 0,  Tests 122 passed (122)
+G1.4 production build              exit 0
+G1.1 secrets in client bundle      none found
+G1.3 npm audit (all)               critical 0, high 0, moderate 0, low 0
+G1.3 npm audit (prod)              critical 0, high 0, moderate 0, low 0
+G3.6 automated dependency updates  dependabot.yml present
+AI-02 safety switches              0 hit(s)
+AI-01 / G3.11 stub markers in src  0 hit(s)
+AI-01 empty catch blocks           0 hit(s)
+G3.8 CODEOWNERS owners             @tidewater-maintainers-placeholder 
+G2.7 CI workflow                   present (runs only on GitHub)
+G2.7 / G3.8 git remote             origin 
+G3.9 header content-security-policy present
+G3.9 header strict-transport-security present
+G3.9 header x-frame-options        present
+G3.9 header x-content-type-options present
+G3.9 cross-site POST               HTTP 403
+G1.2 signed-out page /clients      HTTP 307
+G1.2 signed-out API call           HTTP 401
+G3.3 health endpoint               {"status":"degraded","checks":{"app":"ok","database":"not_configured"}}

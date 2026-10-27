@@ -1,0 +1,69 @@
+{
+  "rubric": "App Readiness Audit v0.1",
+  "phase": "Baseline (before any lab): phase 1 automated checks, plus gate status where the evidence already decides it",
+  "audited": {
+    "repo": "tidewater",
+    "tag": "v0-as-built",
+    "commit": "70c8ac6",
+    "date": "2026-10-26",
+    "environment": "Linux workspace, Node 22.22.0, PostgreSQL 16 for the database tests; setup evidence from macOS (Oct 20 to 22) where stated"
+  },
+  "profile": {
+    "users": "Businesses (small agencies), multi-user, data separated by workspace",
+    "data": "Customer contact data (PII)",
+    "payments": "Stripe Checkout (hosted) with webhooks",
+    "llm_features": true,
+    "built_with_ai_agents": true,
+    "hosting": "Local only; the as-built version is never deployed",
+    "target_level": "L3",
+    "modules": ["Next.js", "Supabase", "Stripe / payments", "LLM features", "Multi-tenant"]
+  },
+  "verdict": {
+    "level": "L1",
+    "target": "L3",
+    "blocking_next_level": ["G2.3", "G2.4", "G2.7"],
+    "blocking_target": ["G2.3", "G2.4", "G2.7", "G3.3", "G3.4", "G3.5", "G3.7", "G3.8"],
+    "summary": "Every L1 gate passes. The app is held at L1 by three L2 gates that no code change can satisfy on its own: backups with a performed restore, an error tracker, and CI that can block a merge."
+  },
+  "gates": [
+    {"gate": "G1.1", "status": "pass", "evidence": "gitleaks over full history (6 commits): no leaks; gitleaks over .next/static: no leaks; AGENTS.md has no key/token/secret lines; only .env.example is tracked"},
+    {"gate": "G1.2", "status": "pass", "evidence": "Signed-out /clients returns 307 to /login; signed-out API returns 401. Full route inventory is phase 2", "note": "probe, not a full inventory"},
+    {"gate": "G1.3", "status": "pass", "evidence": "No critical advisories. npm audit on macOS (Oct 20): 5 high, all dev-only lint tooling; npm audit in the Linux workspace (Oct 26): 0. Production dependencies: 0 in both"},
+    {"gate": "G1.4", "status": "pass", "evidence": "Fresh clone at v0-as-built: npm ci, type check, lint and production build all exit 0; README steps worked end to end on macOS (setup, Oct 22)"},
+    {"gate": "G2.1", "status": "pending", "evidence": "Design looks right (server actions re-read workspace and role; billing columns not writable by the browser role, covered by DB tests). Per-route review of write handlers is phase 2"},
+    {"gate": "G2.2", "status": "pass", "evidence": "RLS on all 9 tables; 48 database tests, including cross-workspace reads and writes, pass against real Postgres"},
+    {"gate": "G2.3", "status": "fail", "finding": "DATA-001"},
+    {"gate": "G2.4", "status": "fail", "finding": "OBS-001"},
+    {"gate": "G2.5", "status": "pass", "evidence": "Rate limits on login, sign-up and the brief endpoint; login limiter covered by DB tests", "finding": "ABUSE-001"},
+    {"gate": "G2.6", "status": "pending", "evidence": "zod schemas with size caps and page-size caps exist and have unit tests; coverage of every write route is phase 2"},
+    {"gate": "G2.7", "status": "fail", "finding": "CHANGE-001"},
+    {"gate": "G2.8", "status": "pass", "evidence": "Monthly per-workspace cap (atomic reserve, DB-tested), 25 s timeout, 700 max output tokens, rate limits on the endpoint"},
+    {"gate": "G3.1", "status": "pass", "evidence": "Signature verified on every event; duplicate, concurrent and stale events tested against real Postgres; live test-mode webhooks returned 200 on macOS (Oct 22)"},
+    {"gate": "G3.2", "status": "pass", "evidence": "122 tests pass: 74 unit, 48 against real Postgres covering auth, isolation and the money path"},
+    {"gate": "G3.3", "status": "fail", "finding": "OBS-002"},
+    {"gate": "G3.4", "status": "fail", "finding": "DELIV-001"},
+    {"gate": "G3.5", "status": "fail", "finding": "DATA-002"},
+    {"gate": "G3.6", "status": "pending", "evidence": "dependabot.yml present (weekly npm and Actions). Age of the 5 dev-only high advisories seen on macOS not yet checked against the 30-day rule", "finding": "DEPS-001"},
+    {"gate": "G3.7", "status": "fail", "finding": "SECRETS-001"},
+    {"gate": "G3.8", "status": "fail", "finding": "CHANGE-002"},
+    {"gate": "G3.9", "status": "pass", "evidence": "Production build serves nonce-based CSP, HSTS, X-Frame-Options and X-Content-Type-Options; cross-site POST returns 403"},
+    {"gate": "G3.10", "status": "pass", "evidence": "No tools given to the model; output rendered as React text nodes only (no dangerouslySetInnerHTML or markdown rendering in src); untrusted notes wrapped and escaped. Adversarial testing is Lab 7", "note": "design-level pass"},
+    {"gate": "G3.11", "status": "pass", "evidence": "No TODO, FIXME, mock or sample-data markers in src; no empty catch blocks"},
+    {"gate": "G4.9", "status": "fail", "pulled_forward": true, "finding": "SUBPROC-001"}
+  ],
+  "findings": [
+    {"id": "DATA-001", "title": "No backups and no restore has ever been performed", "location": "No backup configuration in the repo; README 'What's not built yet' lists no backups policy", "failure_scenario": "A bad migration or deleted workspace on a hosted database cannot be recovered, and nobody knows how long recovery would take", "severity": "High", "status": "Confirmed", "gate": "G2.3", "pattern": "AI-09", "fix": "Enable backups on the hosted Supabase project, perform one restore into a scratch project and record the date and result", "effort": "2 to 4 hours"},
+    {"id": "OBS-001", "title": "Errors are scrubbed but go only to stderr; no error tracker", "location": "src/lib/errors/report.ts (setErrorSink hook unused); src/instrumentation.ts", "failure_scenario": "A production error affecting customers is written to a log nobody watches", "severity": "High", "status": "Confirmed", "gate": "G2.4", "pattern": "AI-09", "fix": "Wire setErrorSink to an error tracker, keep the scrubbing, send one test event and keep the record", "effort": "2 to 4 hours"},
+    {"id": "CHANGE-001", "title": "CI exists but cannot block a merge", "location": ".github/workflows/ci.yml; no GitHub remote or branch protection", "failure_scenario": "A change that fails type checks or tests is merged because nothing requires the checks to pass", "severity": "High", "status": "Confirmed", "gate": "G2.7", "fix": "Push to GitHub, require the CI job as a status check on main, and record the protection settings", "effort": "1 hour"},
+    {"id": "CHANGE-002", "title": "CODEOWNERS names a placeholder; human review of agent changes is not enforced", "location": ".github/CODEOWNERS (@tidewater-maintainers-placeholder)", "failure_scenario": "An AI agent's change reaches main without any human reading it", "severity": "High", "status": "Confirmed", "gate": "G3.8", "pattern": "AI-06", "fix": "Replace the placeholder with a real owner and turn on 'Require review from Code Owners'; scope agent credentials so they cannot push to main", "effort": "1 hour"},
+    {"id": "OBS-002", "title": "Health check exists but no alert reaches a named person", "location": "src/app/api/health/route.ts; no alerting configuration", "failure_scenario": "The app or its database goes down and the first person to notice is a customer", "severity": "High", "status": "Confirmed", "gate": "G3.3", "pattern": "AI-09", "fix": "Point an uptime monitor at /api/health and route alerts to a named owner", "effort": "1 to 2 hours"},
+    {"id": "DELIV-001", "title": "No deploy pipeline and no tested rollback", "location": "No deploy configuration; deployment is out of scope per README", "failure_scenario": "A bad release cannot be rolled back quickly, so an outage lasts as long as a fix takes to write", "severity": "High", "status": "Confirmed", "gate": "G3.4", "pattern": "AI-09", "fix": "Deploy the hardened version through a pipeline with preview deploys, then perform and record one rollback", "effort": "0.5 to 1 day"},
+    {"id": "DATA-002", "title": "No restore drill against stated RTO and RPO", "location": "No RTO/RPO targets or drill record", "failure_scenario": "Nobody can tell a buyer how much data could be lost or how long recovery takes", "severity": "High", "status": "Confirmed", "gate": "G3.5", "fix": "Set RTO and RPO targets, run a timed restore drill and record it (Lab 5)", "effort": "3 to 4 hours"},
+    {"id": "SECRETS-001", "title": "Secrets live in local .env files; no secrets manager, rotation or per-person access", "location": "src/lib/env.ts reads process.env; README lists secrets management as out of scope", "failure_scenario": "A key shared between people cannot be rotated without coordination, and nobody can say who has it", "severity": "High", "status": "Confirmed", "gate": "G3.7", "fix": "Store production secrets in the hosting platform's secret store or a secrets manager, with per-person access and a rotation record", "effort": "2 to 4 hours"},
+    {"id": "SUBPROC-001", "title": "Data flows to Stripe and Anthropic are documented, but there is no subprocessor list", "location": "README 'Data sent to third parties'; README 'What's not built yet' lists no DPA/subprocessor documentation", "failure_scenario": "A buyer's questionnaire asks for subprocessors and the LLM provider is missing or undocumented", "severity": "Medium", "status": "Confirmed", "gate": "G4.9", "fix": "Publish a subprocessor list (Supabase, Stripe, Anthropic, hosting) with purpose, data and region, and record each provider's data-use terms", "effort": "1 to 2 hours"},
+    {"id": "ABUSE-001", "title": "Per-IP rate limits trust X-Forwarded-For", "location": "src/lib/rate-limit.ts; documented in README", "failure_scenario": "Without a trusted proxy setting the header, a client can rotate the header to dodge per-IP limits; per-email limits still apply", "severity": "Medium", "status": "Plausible", "gate": "G2.5", "fix": "Read the client IP only from the deployment platform's trusted header", "effort": "1 hour"},
+    {"id": "DEPS-001", "title": "Dev-only high advisories; audit results differ by environment", "location": "npm audit: 5 high (braces via eslint-config-next) on macOS Oct 20; 0 in the Linux workspace Oct 26", "failure_scenario": "Dependency evidence that changes with where and when it runs cannot support a 30-day remediation rule", "severity": "Low", "status": "Plausible", "gate": "G3.6", "fix": "Run npm audit in CI on a schedule, keep the dated output as evidence, and track advisory age", "effort": "1 hour"},
+    {"id": "KEYS-001", "title": "Built on Supabase's legacy anon and service_role keys", "location": ".env.example, src/lib/env.ts, README", "failure_scenario": "Key names in the docs don't match what the current Supabase CLI shows, and the legacy keys can't be rotated independently", "severity": "Low", "status": "Confirmed", "gate": "G3.7", "fix": "Move to Supabase publishable and secret keys and update the docs", "effort": "2 to 3 hours"},
+    {"id": "DOCS-001", "title": "README is behind reality", "location": "README 'Running tests' says the Supabase Postgres (54322) hasn't been tried; 'What's not built yet' says the app has never run against real Supabase, Stripe or Anthropic", "failure_scenario": "Readers follow a harder path than needed and distrust a README that contradicts what the app has since done", "severity": "Low", "status": "Confirmed", "dimension": "Documentation truthfulness", "fix": "Update both statements with the dates and results of the Oct 20 to 22 setup", "effort": "15 minutes"}
+  ]
+}
