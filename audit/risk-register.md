@@ -1,6 +1,6 @@
 # Risk register: Tidewater, from the baseline
 
-Built Oct 29, 2026 from `audit/findings.json` (baseline of `v0-as-built`, commit `70c8ac6`, run Oct 26). Owner of every entry: @geekiodev.
+Built Oct 29, 2026 from `audit/findings.json` (baseline of `v0-as-built`, commit `70c8ac6`, run Oct 26), plus CHANGE-003, found the same day from the repo's first CI run on GitHub. Owner of every entry: @geekiodev.
 
 **Target:** L3 before the hardened version takes real customer data ("first deploy"). The as-built version is never deployed.
 
@@ -15,6 +15,7 @@ Built Oct 29, 2026 from `audit/findings.json` (baseline of `v0-as-built`, commit
 
 | Finding | Gate | Severity | Decision | Closes with | Due |
 | --- | --- | --- | --- | --- | --- |
+| CHANGE-003: CI workflow file is invalid YAML; no CI check has ever run | G2.7 (L2 blocker) | High | Fix | Lab 3: fix the workflow first, so there is a check for branch protection to require | Oct 31 |
 | CHANGE-001: CI can't block a merge | G2.7 (L2 blocker) | High | Fix | Lab 3: branch protection requiring CI | Oct 31 |
 | CHANGE-002: CODEOWNERS placeholder, review not enforced | G3.8 | High | Fix | Lab 3: real owner, Code Owner review required | Oct 31 |
 | DOCS-001: README behind reality | Docs | Low | Fix | Its own pull request | Oct 31 |
@@ -51,7 +52,7 @@ G2.1 (server-side authorization), G2.6 (input validation) and G3.6 (dependency p
 
 | | Level | What stands in the way |
 | --- | --- | --- |
-| Now | L1 | G2.3, G2.4, G2.7 |
+| Now | L1 | G2.3, G2.4, G2.7 (CI invalid and not required) |
 | After Arc 1 (Nov 12) | L2, if G2.1 and G2.6 pass review | G3.4, G3.7 |
 | First deploy | L3 target | Nothing open except the accepted ABUSE-001, which expires that day |
 
@@ -60,3 +61,7 @@ G2.1 (server-side authorization), G2.6 (input validation) and G3.6 (dependency p
 Launch sign-off happens before first deploy, against this register as it stands then: every "fix" closed with evidence, and every acceptance renewed or closed. On this project the owner who fixes and the person who accepts are the same person, which a reviewer would flag as a gap in separation of duties. That's recorded here rather than hidden.
 
 Maps to: NIST 800-53 RA-3, RA-7 and CA-5 (plan of action and milestones); ISO 27001:2022 clause 6.1.3 (risk treatment); SOC 2 CC9.1.
+
+## Change log
+
+- Oct 29: added CHANGE-003. The first CI run on GitHub (triggered when the repo went public) failed before any job started: line 60 of `.github/workflows/ci.yml` holds an unquoted step name containing `: `, which YAML parses as a mapping, so GitHub rejects the whole file. Type check, lint, tests and build have never run in CI, on any commit or Dependabot pull request. The baseline missed it because it only checked that the workflow file existed. The next baseline run validates the workflow as well.

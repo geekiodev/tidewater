@@ -34,3 +34,7 @@ TEST_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:54322/tidewater_test ba
 ```
 
 Run it from `main`, which is `v0-as-built` plus this `audit/` folder and nothing else (`git diff v0-as-built --stat` shows only `audit/`). Needs Node 22, git, gitleaks (`brew install gitleaks`) and a running local Supabase (`npx supabase start`) or the separate Postgres described in the README. Evidence lands in `audit/out/<timestamp>/`.
+
+## Addendum, Oct 29: what this baseline missed
+
+The repo's first CI run on GitHub failed before any job started. Line 60 of `.github/workflows/ci.yml` is an unquoted step name containing `: `, which YAML reads as a mapping, so GitHub rejects the whole workflow. No CI check has ever run, on any commit or Dependabot pull request. This baseline recorded the workflow as "present" because it only checked that the file existed. It's now finding CHANGE-003 (High, G2.7), and the next baseline run validates the workflow instead of looking for it.
