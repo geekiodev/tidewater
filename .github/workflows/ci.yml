@@ -57,7 +57,7 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Tests (unit + database: workspace isolation, access control, billing)
+      - name: "Tests (unit + database: workspace isolation, access control, billing)"
         run: npm test
 
       - name: Production build

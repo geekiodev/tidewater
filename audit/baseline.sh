@@ -67,6 +67,13 @@ summary "AI-01 empty catch blocks" "$(wc -l < "$OUT/empty-catch.txt" | tr -d ' '
 cp .github/CODEOWNERS "$OUT/CODEOWNERS.txt" 2>/dev/null
 summary "G3.8 CODEOWNERS owners" "$(grep -v '^#' .github/CODEOWNERS 2>/dev/null | awk 'NF{print $2}' | sort -u | tr '\n' ' ')"
 summary "G2.7 CI workflow" "$( [ -f .github/workflows/ci.yml ] && echo 'present (runs only on GitHub)' || echo 'none')"
+# A workflow GitHub can't parse never runs (CHANGE-003), so validate it, not just look for it
+if command -v actionlint >/dev/null; then
+  actionlint .github/workflows/*.yml >"$OUT/workflow-lint.txt" 2>&1; rc=$?; tool=actionlint
+else
+  ruby -ryaml -e 'ARGV.each { |f| YAML.load_file(f) }' .github/workflows/*.yml >"$OUT/workflow-lint.txt" 2>&1; rc=$?; tool="YAML parse only (brew install actionlint)"
+fi
+summary "G2.7 CI workflow valid" "$( [ $rc -eq 0 ] && echo "valid ($tool)" || echo "INVALID ($tool), see workflow-lint.txt")"
 summary "G2.7 / G3.8 git remote" "$(git remote | tr '\n' ' ' | sed 's/^$/none: branch protection cannot exist yet/')"
 
 # G1.2 / G3.9: run the production build and probe it signed out
