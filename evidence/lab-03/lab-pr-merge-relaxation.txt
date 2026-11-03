@@ -1,0 +1,18 @@
+Authorised by the repo owner (@geekiodev) in chat, Nov 3, 2026: turn off enforce_admins, admin-merge PR #6, turn it back on.
+== 2026-11-03T12:56:38Z DELETE enforce_admins
+HTTP/2.0 204 No Content
+enforce_admins now: false
+== 2026-11-03T12:56:39Z gh pr merge 6 --squash --admin
+GraphQL: Invalid email address (mergePullRequest)
+== 2026-11-03T12:56:40Z POST enforce_admins
+true
+enforce_admins now: true
+
+Retry: the squash merge was refused with 'Invalid email address' for the noreply --author-email; rebase merge keeps the commits' own noreply authors.
+== 2026-11-03T12:57:12Z DELETE enforce_admins
+HTTP/2.0 204 No Content
+enforce_admins now: false
+== 2026-11-03T12:57:13Z gh pr merge 6 --rebase --admin
+== 2026-11-03T12:57:17Z POST enforce_admins
+true
+enforce_admins now: true
