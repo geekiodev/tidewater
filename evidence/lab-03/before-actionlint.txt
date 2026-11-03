@@ -1,0 +1,5 @@
+.github/workflows/ci.yml:60:36: could not parse as YAML: mapping values are not allowed in this context [syntax-check]
+   |
+60 |       - name: Tests (unit + database: workspace isolation, access control, billing)
+   |                                    ^~
+exit 1
