@@ -1,0 +1,9 @@
+Type check, lint, test, build	Install	2026-11-03T12:34:49.7357180Z 16 moderate severity vulnerabilities
+Type check, lint, test, build	Tests (unit + database: workspace isolation, access control, billing)	2026-11-03T12:35:01.1054503Z  Test Files  7 passed (7)
+Type check, lint, test, build	Production build	2026-11-03T12:35:07.7380082Z ✓ Compiled successfully in 6.0s
+Type check, lint, test, build	Production build	2026-11-03T12:35:14.2043327Z ✓ Generating static pages using 3 workers (13/13) in 190ms
+Type check, lint, test, build	Production build	2026-11-03T12:35:14.2162282Z Route (app)
+Type check, lint, test, build	Audit production dependencies	2026-11-03T12:35:14.7544925Z found 0 vulnerabilities
+Type check, lint, test, build	Post Run actions/setup-node@v4	2026-11-03T12:35:15.6510306Z (node:3526) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+Type check, lint, test, build	Tests (unit + database: workspace isolation, access control, billing)	2026-11-03T12:35:01.1054503Z  Test Files  7 passed (7)
+Type check, lint, test, build	Tests (unit + database: workspace isolation, access control, billing)	2026-11-03T12:35:01.1055844Z       Tests  122 passed (122)

@@ -1,0 +1,17 @@
+
+✓ lab-03-branch-protection .github/workflows/ci.yml geekiodev/tidewater#6 · 41636723798
+Triggered via pull_request about 2 minutes ago
+
+JOBS
+✓ Type check, lint, test, build in 1m46s (ID 125919673038)
+
+ANNOTATIONS
+! Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Type check, lint, test, build: .github#2
+
+- "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Type check, lint, test, build: .github#1
+
+
+For more information about the job, try: gh run view --job=125919673038
+View this run on GitHub: https://github.com/geekiodev/tidewater/actions/runs/41636723798

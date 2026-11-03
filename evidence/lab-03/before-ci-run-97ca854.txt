@@ -1,0 +1,13 @@
+
+X main .github/workflows/ci.yml · 40826732546
+Triggered via push about 5 days ago
+
+X This run likely failed because of a workflow file issue.
+
+For more information, see: https://github.com/geekiodev/tidewater/actions/runs/40826732546
+
+Annotation shown on the run page (https://github.com/geekiodev/tidewater/actions/runs/40826732546), read Nov 3, 2026:
+  1 error
+  Invalid workflow file: .github/workflows/ci.yml#L60
+  You have an error in your yaml syntax on line 60
+Jobs created: 0

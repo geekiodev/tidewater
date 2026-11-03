@@ -1,0 +1,8 @@
+== 2026-11-03T12:39:07Z gh pr merge 6 --squash
+X Pull request geekiodev/tidewater#6 is not mergeable: the base branch policy prohibits the merge.
+To have the pull request merged after all the requirements have been met, add the `--auto` flag.
+To use administrator privileges to immediately merge the pull request, add the `--admin` flag.
+== PR state
+mergeStateStatus=BLOCKED reviewDecision=REVIEW_REQUIRED author=geekiodev checks=Type check, lint, test, build=SUCCESS
+== collaborators with write access
+geekiodev admin
