@@ -59,13 +59,24 @@ Then branch protection on `main` (`after.json`):
 
 Recorded at 2026-11-03T12:39:07Z: `gh pr merge 6 --squash` was refused by the base branch policy. Required review can't be met on a one-person repo, which is the separation-of-duties gap the risk register already records.
 
-The AI agent running this lab also wasn't allowed to approve the PR on the owner's behalf; its own safety rules refused the self-approval. So the relaxation is done by the owner, by hand:
+The AI agent running this lab also wasn't allowed to approve the PR on the owner's behalf; its own safety rules refused the self-approval. The owner then authorised one relaxation, in writing, for this merge only:
 
 1. Turn off "apply to admins" only (`enforce_admins: false`). The CI and Code Owner rules stay on for everyone else.
 2. Merge PR #6 as admin, with CI green.
 3. Turn "apply to admins" back on and re-export the settings as `after-restored.json`.
 
-The merge record (who did it, when, and the restored settings) is added below once it has happened.
+**What happened** (`lab-pr-merge-relaxation.txt`):
+
+| Time (UTC) | Step | Result |
+| --- | --- | --- |
+| 12:56:38 | `enforce_admins` off | 204 |
+| 12:56:39 | Squash merge as admin | Refused: `Invalid email address` for the noreply author email. Nothing merged |
+| 12:56:40 | `enforce_admins` on | Restored after 2 seconds |
+| 12:57:12 | `enforce_admins` off | 204 |
+| 12:57:13 | Rebase merge as admin | Merged at 12:57:16 by @geekiodev, as `4cebe8b` and `c7361f2` |
+| 12:57:17 | `enforce_admins` on | Restored after 5 seconds |
+
+"Apply to admins" was off for 7 seconds in total. `after-restored.json` is identical to `after.json`.
 
 ## 7. Evidence kept
 
@@ -76,10 +87,11 @@ Everything above is in `evidence/lab-03/`, with dates in the files or their comm
 - [x] The workflow is valid and CI runs on pull requests (PR #6 green).
 - [x] `main` requires the CI job and a Code Owner review, including for admins (`after.json`).
 - [x] A pull request that fails CI can't be merged (PR #7).
-- [ ] The lab PR is merged and "apply to admins" is back on (`after-restored.json`).
+- [x] The lab PR is merged and "apply to admins" is back on (`after-restored.json`).
 
 ## Open after this lab
 
-- **Separation of duties.** With one maintainer, every change to `main` needs either a second reviewer or an admin relaxation. A second GitHub account with write access, used as a real reviewer, would close the gap; a bot approval would not.
+- **Separation of duties.** With one maintainer, every change to `main` needs either a second reviewer or an admin relaxation. This merge record itself has to go through the same protected flow. A second GitHub account with write access, used as a real reviewer, would close the gap; a bot approval would not.
+- **Dependabot PRs #1 to #5** still show no checks after the merge. They're built on the old `main`, whose workflow GitHub rejects, so CI can only run on them once they're rebased onto the fixed workflow.
 - **Warnings in the first CI run:** `actions/checkout@v4` and `actions/setup-node@v4` target Node 20, which GitHub is retiring; `ubuntu-latest` is moving to Ubuntu 26. Neither fails the build today.
 - **Dependency evidence moved again.** `npm ci` in CI reported 16 moderate advisories across all dependencies (production: 0). The baseline saw 5 high on macOS (Oct 20) and 0 in a clean Linux workspace (Oct 26). This adds to DEPS-001.
