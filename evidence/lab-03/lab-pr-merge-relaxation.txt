@@ -16,3 +16,19 @@ enforce_admins now: false
 == 2026-11-03T12:57:17Z POST enforce_admins
 true
 enforce_admins now: true
+
+PR #8 at 394c13e, CI SUCCESS. Relaxation approved by the repo owner (@geekiodev) in chat.
+== 2026-11-05T03:47:20Z enforce_admins off: HTTP/2.0 204 No Content
+== 2026-11-05T03:47:21Z gh pr merge 8 --squash --admin
+merge exit 0
+== 2026-11-05T03:47:24Z enforce_admins on: true
+enforce_admins now: true
+PR state: MERGED mergedAt=2026-11-05T03:47:23Z by=geekiodev commit=a5bd7f5
+
+PR #9 at 500569b, CI SUCCESS. Relaxation approved by the repo owner (@geekiodev) in chat.
+== 2026-11-05T03:49:16Z enforce_admins off: HTTP/2.0 204 No Content
+== 2026-11-05T03:49:17Z gh pr merge 9 --squash --admin
+merge exit 0
+== 2026-11-05T03:49:19Z enforce_admins on: true
+enforce_admins now: true
+PR state: MERGED mergedAt=2026-11-05T03:49:19Z by=geekiodev commit=40bd649
