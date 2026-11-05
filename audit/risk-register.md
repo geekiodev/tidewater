@@ -32,6 +32,7 @@ Built Oct 29, 2026 from `audit/findings.json` (baseline of `v0-as-built`, commit
 | DELIV-001: no deploy pipeline or tested rollback | G3.4 | High | Fix | Lab 10: pipeline with preview deploys, one rollback performed | Before first deploy |
 | SECRETS-001: secrets in local .env files | G3.7 | High | Fix | Lab 11: platform secret store, per-person access, rotation record | Before first deploy |
 | KEYS-001: legacy Supabase anon and service_role keys | G3.7 | Low | Fix | Lab 11: the new hosted project uses publishable and secret keys | Before first deploy |
+| ABUSE-001 (at expiry): client IP from a header clients can set | G2.5 | Medium | Fix | Read the client IP only from the hosting platform's trusted header; test with a spoofed header | Before first deploy |
 | DEPS-001: audit results differ by environment | G3.6 | Low | Fix | Lab 2: npm audit in CI on a schedule, dated output kept | Before first deploy |
 
 DATA-001 and DATA-002 are re-run against the hosted database before first deploy; the local drill proves the procedure, not the hosted backups.
@@ -40,9 +41,9 @@ DATA-001 and DATA-002 are re-run against the hosted database before first deploy
 
 | Finding | Gate | Severity | Decision | Compensating control | Expires |
 | --- | --- | --- | --- | --- | --- |
-| ABUSE-001: per-IP rate limits trust X-Forwarded-For | G2.5 (passes) | Medium | Accept | Per-email login limits stay in force; no deployment exists for the header to be spoofed against | First deploy, when the client IP must come from the platform's trusted header |
+| ABUSE-001: per-IP rate limits trust X-Forwarded-For | G2.5 (passes) | Medium | Accept, with conditions | No exposure while the app is undeployed. The per-email login limit covers brute force against one account, but not password spraying or sign-up abuse | First deploy, or Dec 31, 2026, whichever comes first |
 
-Full acceptance record (who accepted it, why, and what ends it) follows in Post 9.
+Full record: [`audit/acceptances/ABUSE-001.md`](acceptances/ABUSE-001.md).
 
 ## Still to assess
 
@@ -54,7 +55,7 @@ G2.1 (server-side authorization), G2.6 (input validation) and G3.6 (dependency p
 | --- | --- | --- |
 | Now | L1 | G2.3, G2.4, G2.7 (CI invalid and not required) |
 | After Arc 1 (Nov 12) | L2, if G2.1 and G2.6 pass review | G3.4, G3.7 |
-| First deploy | L3 target | Nothing open except the accepted ABUSE-001, which expires that day |
+| First deploy | L3 target | Nothing open: ABUSE-001's acceptance ends and its fix is due the same day |
 
 ## Sign-off
 
@@ -65,3 +66,4 @@ Maps to: NIST 800-53 RA-3, RA-7 and CA-5 (plan of action and milestones); ISO 27
 ## Change log
 
 - Oct 29: added CHANGE-003. The first CI run on GitHub (triggered when the repo went public) failed before any job started: line 60 of `.github/workflows/ci.yml` holds an unquoted step name containing `: `, which YAML parses as a mapping, so GitHub rejects the whole file. Type check, lint, tests and build have never run in CI, on any commit or Dependabot pull request. The baseline missed it because it only checked that the workflow file existed. The next baseline run validates the workflow as well.
+- Nov 5: wrote the ABUSE-001 acceptance record. Testing the compensating control against each path showed it covers brute force against one account but not password spraying or sign-up abuse, so the register now says so, the acceptance gained a calendar expiry (Dec 31, 2026), and the fix joined the "before first deploy" list.
