@@ -14,7 +14,7 @@
     "test:db": "vitest run tests/db"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.135.0",
+    "@anthropic-ai/sdk": "^1.6.0",
     "@sentry/nextjs": "11.11.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
