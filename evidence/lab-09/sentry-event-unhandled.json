@@ -1,0 +1,163 @@
+{
+    "id": "741f675458304ac6833a5629ae4675a8",
+    "groupID": "7838579028",
+    "eventID": "741f675458304ac6833a5629ae4675a8",
+    "projectID": "4512405795373056",
+    "size": 3534,
+    "entries": [
+        {
+            "data": {
+                "formatted": "Error: Lab 9 unhandled test for [email], phone [phone], note: Renewal call went badly"
+            },
+            "type": "message"
+        }
+    ],
+    "dist": null,
+    "message": "Error: Lab 9 unhandled test for [email], phone [phone], note: Renewal call went badly",
+    "title": "Error: Lab 9 unhandled test for [email], phone [phone], note: Renewal call went badly",
+    "location": null,
+    "user": {
+        "id": null,
+        "email": null,
+        "username": null,
+        "ip_address": null,
+        "name": null,
+        "geo": {
+            "country_code": "[redacted for publication]",
+            "city": "[redacted for publication]",
+            "region": "[redacted for publication]"
+        },
+        "data": null
+    },
+    "contexts": {
+        "runtime": {
+            "runtime": "node v22.18.0",
+            "name": "node",
+            "version": "v22.18.0",
+            "type": "runtime"
+        },
+        "trace": {
+            "trace_id": "1ac0b9287b9f4e41b613f7f1c0775aac",
+            "span_id": "a4c31fb6ff51c5f6",
+            "status": "unknown",
+            "type": "trace"
+        }
+    },
+    "sdk": {
+        "name": "sentry.javascript.nextjs",
+        "version": "11.11.0"
+    },
+    "context": {
+        "digest": null,
+        "method": "GET",
+        "path": "[Filtered]",
+        "route": "[Filtered]",
+        "routeType": "route",
+        "stack": "    at GET (/Users/geekio/Dev/grc-engineering/brand-builder/tidewater/.next/dev/server/chunks/[root-of-the-server]__1pli4ug67tebt._.js:65:11)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:80:14)\n    at AppRouteRouteModule.renderToResponse (/Users/geekio/Dev/grc-engineering/brand-builder/tidewater/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:25906)\n    at /Users/geekio/Dev/grc-engineering/brand-builder/tidewater/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:31150\n    at /Users/geekio/Dev/grc-engineering/brand-builder/tidewater/node_modules/next/dist/server/lib/trace/tracer.js:255:36\n    at /Users/geekio/Dev/grc-engineering/brand-builder/tidewater/node_modules/next/dist/server/lib/trace/tracer.js:281:88\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)\n    at /Users/geekio/Dev/grc-engineering/brand-builder/tidewater/node_modules/next/dist/server/lib/router-utils/i\u2026",
+        "where": "onRequestError"
+    },
+    "packages": {},
+    "type": "default",
+    "metadata": {
+        "title": "Error: Lab 9 unhandled test for [email], phone [phone], note: Renewal call went badly"
+    },
+    "tags": [
+        {
+            "key": "environment",
+            "value": "development"
+        },
+        {
+            "key": "interface_type",
+            "value": "contexts"
+        },
+        {
+            "key": "level",
+            "value": "error"
+        },
+        {
+            "key": "runtime",
+            "value": "node v22.18.0"
+        },
+        {
+            "key": "runtime.name",
+            "value": "node"
+        },
+        {
+            "key": "turbopack",
+            "value": "True"
+        }
+    ],
+    "platform": "node",
+    "dateReceived": "2026-11-10T06:13:19.471347Z",
+    "errors": [],
+    "occurrence": null,
+    "_meta": {
+        "entries": {},
+        "message": null,
+        "user": null,
+        "contexts": null,
+        "sdk": null,
+        "context": {
+            "path": {
+                "": {
+                    "rem": [
+                        [
+                            "@password:filter",
+                            "s",
+                            0,
+                            10
+                        ]
+                    ],
+                    "len": 26,
+                    "chunks": [
+                        {
+                            "type": "redaction",
+                            "text": "[Filtered]",
+                            "rule_id": "@password:filter",
+                            "remark": "s"
+                        }
+                    ]
+                }
+            },
+            "route": {
+                "": {
+                    "rem": [
+                        [
+                            "@password:filter",
+                            "s",
+                            0,
+                            10
+                        ]
+                    ],
+                    "len": 26,
+                    "chunks": [
+                        {
+                            "type": "redaction",
+                            "text": "[Filtered]",
+                            "rule_id": "@password:filter",
+                            "remark": "s"
+                        }
+                    ]
+                }
+            }
+        },
+        "packages": null,
+        "tags": {}
+    },
+    "crashFile": null,
+    "culprit": "",
+    "dateCreated": "2026-11-10T06:13:19.298000Z",
+    "fingerprints": [
+        "3656bfb315c67ac2ead173a20b1edadc"
+    ],
+    "groupingConfig": {
+        "enhancements": "KLUv_SAd6QAAkwORuGFsbC1wbGF0Zm9ybXM6MjAyNi0wMS0yMJA#KLUv_SAd6QAAkwORuGFsbC1wbGF0Zm9ybXM6MjAyNi0wMS0yMJA#KLUv_SAd6QAAkwORuGFsbC1wbGF0Zm9ybXM6MjAyNi0wMS0yMJA",
+        "id": "newstyle:2026-01-20"
+    },
+    "release": null,
+    "userReport": null,
+    "sdkUpdates": [],
+    "resolvedWith": [],
+    "nextEventID": null,
+    "previousEventID": null
+}

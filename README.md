@@ -54,6 +54,7 @@ Fill in `.env.local` (it's git-ignored; never commit it):
 | `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_TEAM` | Price ids (`price_...`) of two monthly recurring prices you create in Stripe test mode | The only source of plan prices |
 | `ANTHROPIC_API_KEY` | Anthropic Console | Account brief (server only) |
 | `ANTHROPIC_MODEL` | Optional, default `claude-haiku-5-5` | Model for the brief |
+| `SENTRY_DSN` | Optional, from your Sentry project's Client Keys | **Server only**: sends scrubbed error reports to Sentry |
 | `AI_MONTHLY_BRIEF_LIMIT` | Optional, default `200` | Briefs per workspace per calendar month |
 | `TEST_DATABASE_URL` | Only for tests; see [Running tests](#running-tests) | Throwaway Postgres DB for the test suite |
 
@@ -139,7 +140,7 @@ tests/db/                  Real-Postgres tests: isolation, roles, invitations, r
 
 **Security model in one paragraph.** Postgres row-level security is the backstop. Every table has RLS on, and Supabase's default grants are revoked and replaced with the minimum each role needs. Workspace membership is checked in the database from `auth.uid()`. Contacts and notes use composite foreign keys, so they can't point at another workspace's client. Billing columns can only be written by the Stripe webhook (service role). On top of that, every page, server action and API route checks the session on the server and reads the workspace and role from the database; nothing is taken from the browser. The service-role key is used only for rate limiting, the Stripe webhook, the AI quota and the health check, never to serve a user's data.
 
-**Data sent to third parties.** Stripe gets the owner's email (Checkout) and the workspace id in metadata; card details go straight to Stripe's hosted page. Anthropic gets the client's name, contacts' names and job titles, and up to 15 recent notes when a user clicks "Brief me". Contact emails and phone numbers are not sent.
+**Data sent to third parties.** Stripe gets the owner's email (Checkout) and the workspace id in metadata; card details go straight to Stripe's hosted page. Anthropic gets the client's name, contacts' names and job titles, and up to 15 recent notes when a user clicks "Brief me". Contact emails and phone numbers are not sent. Sentry (when `SENTRY_DSN` is set) gets scrubbed server error reports only; see `src/lib/errors/sentry-sink.ts` and the subprocessor table in `audit/risk-register.md`.
 
 ---
 
@@ -155,7 +156,7 @@ Product
 
 Security and compliance work still needed before real customer data
 - **Never run against real Supabase, Stripe or Anthropic.** The first build environment had no Docker images or credentials. Run the full flow end to end on a real local stack first; see `BUILD_LOG.md`.
-- No hosted error tracker. Errors go to stderr as scrubbed JSON, and the scrubbing is pattern-based, so it can miss personal data.
+- Error tracking covers server errors only, and only what the scrubber lets through. The scrubbing is pattern-based, so it can miss personal data (free text in an error message, for example). Browser errors aren't reported.
 - No MFA, SSO, session management UI, or account lockout beyond rate limits.
 - No audit logging of who viewed or changed what.
 - No data retention or deletion tooling (GDPR/CCPA requests), backups policy, or DPA/subprocessor documentation.

@@ -1,0 +1,56 @@
+{
+    "id": "6319295",
+    "name": "Lab 9: email on every new issue",
+    "type": "alert",
+    "organizationId": "4512405749104640",
+    "createdBy": "5166629",
+    "dateCreated": "2026-11-10T06:15:11.434282Z",
+    "dateUpdated": "2026-11-10T06:15:11.434266Z",
+    "triggers": {
+        "id": "15930412",
+        "organizationId": "4512405749104640",
+        "logicType": "any-short",
+        "conditions": [
+            {
+                "id": "23170161",
+                "type": "first_seen_event",
+                "comparison": true,
+                "conditionResult": true
+            }
+        ],
+        "actions": []
+    },
+    "actionFilters": [
+        {
+            "id": "15930413",
+            "organizationId": "4512405749104640",
+            "logicType": "any-short",
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "17767979",
+                    "type": "email",
+                    "integrationId": null,
+                    "data": {
+                        "fallthroughType": "ActiveMembers"
+                    },
+                    "config": {
+                        "targetType": "issue_owners",
+                        "targetIdentifier": null
+                    },
+                    "status": "active"
+                }
+            ]
+        }
+    ],
+    "environment": null,
+    "config": {
+        "frequency": 0
+    },
+    "detectorIds": [
+        "10906480"
+    ],
+    "enabled": true,
+    "lastTriggered": null,
+    "owner": null
+}
