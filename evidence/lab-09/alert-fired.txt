@@ -1,0 +1,12 @@
+Lab 9 alert test, Nov 10, 2026 (UTC)
+
+Alert rule: "Lab 9: email on every new issue" (Sentry workflow 6319295, created 06:15:11 via the API; definition in sentry-alert-rule.json).
+  Trigger: first_seen_event (a new issue)
+  Action: email to issue owners, falling through to active members of the-geekio-project (the only member is the owner, @geekiodev)
+
+06:15:26  new error reported through the scrubber ("Lab 9 alert test: ...") -> new issue 7838581340, first seen 06:15:26
+06:15:49  rule lastTriggered (from the workflows API)
+
+Email received: see the owner's screenshot.
+
+Uptime alerting on /api/health: not set up. It needs a deployed URL for an uptime monitor to call, and Tidewater is not deployed. Moved to "Fix before first deploy" in the risk register as OBS-002 (uptime).

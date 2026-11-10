@@ -30,10 +30,18 @@ const defaultSink: ErrorSink = (event) => {
   console.error(JSON.stringify(event));
 };
 
-let sink: ErrorSink = defaultSink;
+// Kept on globalThis, not in module state: Next.js bundles instrumentation.ts
+// (where setErrorSink() is called) separately from routes and pages, so each
+// bundle has its own copy of this module.
+const SINK_KEY = Symbol.for("tidewater.errorSink");
+type SinkHolder = typeof globalThis & { [SINK_KEY]?: ErrorSink };
 
 export function setErrorSink(next: ErrorSink | null) {
-  sink = next ?? defaultSink;
+  (globalThis as SinkHolder)[SINK_KEY] = next ?? undefined;
+}
+
+function currentSink(): ErrorSink {
+  return (globalThis as SinkHolder)[SINK_KEY] ?? defaultSink;
 }
 
 const PII_KEYS = new Set([
@@ -137,7 +145,7 @@ export function buildErrorEvent(err: unknown, context: Record<string, unknown> =
 
 export function reportError(err: unknown, context: Record<string, unknown> = {}): void {
   try {
-    sink(buildErrorEvent(err, context));
+    currentSink()(buildErrorEvent(err, context));
   } catch {
     // Reporting must never throw into the request path.
   }

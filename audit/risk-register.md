@@ -23,7 +23,7 @@ Built Oct 29, 2026 from `audit/findings.json` (baseline of `v0-as-built`, commit
 | DATA-002: no restore drill against RTO and RPO | G3.5 | High | Fix | Lab 5: RTO and RPO stated and measured | Nov 8 |
 | OBS-001: errors go to stderr only | G2.4 (L2 blocker) | High | Fix | Lab 9: error tracker wired in, test event recorded | Nov 8 |
 | OBS-002: no alert reaches a named person | G3.3 | High | Fix | Lab 9: uptime check on /api/health, alerts to the owner | Nov 8 |
-| SUBPROC-001: no subprocessor list | G4.9 (L4, pulled forward) | Medium | Fix | Subprocessor list for Supabase, Stripe, Anthropic and hosting | Nov 12 |
+| SUBPROC-001: no subprocessor list | G4.9 (L4, pulled forward) | Medium | Fix | Subprocessor list for Supabase, Stripe, Anthropic, Sentry and hosting (Sentry recorded below) | Nov 12 |
 
 ## Fix before first deploy
 
@@ -32,6 +32,9 @@ Built Oct 29, 2026 from `audit/findings.json` (baseline of `v0-as-built`, commit
 | DELIV-001: no deploy pipeline or tested rollback | G3.4 | High | Fix | Lab 10: pipeline with preview deploys, one rollback performed | Before first deploy |
 | SECRETS-001: secrets in local .env files | G3.7 | High | Fix | Lab 11: platform secret store, per-person access, rotation record | Before first deploy |
 | KEYS-001: legacy Supabase anon and service_role keys | G3.7 | Low | Fix | Lab 11: the new hosted project uses publishable and secret keys | Before first deploy |
+| OBS-002 (uptime): nothing watches `/api/health` | G3.3 | High | Fix | Uptime check on the deployed `/api/health`, alerting the owner; can't exist until there is a deployment | Before first deploy |
+| OBS-003: free text in error messages passes the scrubber | G2.4 | Medium | Fix | Report errors with fixed messages and send identifiers as context, or drop the message for unknown error types; test that a note's text never reaches Sentry | Before first deploy |
+| OBS-004: Sentry stores an approximate location for each event | G2.4 | Low | Fix | Turn on "Prevent storing of IP addresses" in the Sentry project and check a new event has no `user.geo` | Before first deploy |
 | ABUSE-001 (at expiry): client IP from a header clients can set | G2.5 | Medium | Fix | Read the client IP only from the hosting platform's trusted header; test with a spoofed header | Before first deploy |
 | DEPS-001: audit results differ by environment | G3.6 | Low | Fix | Lab 2: npm audit in CI on a schedule, dated output kept | Before first deploy |
 
@@ -44,6 +47,14 @@ DATA-001 and DATA-002 are re-run against the hosted database before first deploy
 | ABUSE-001: per-IP rate limits trust X-Forwarded-For | G2.5 (passes) | Medium | Accept, with conditions | No exposure while the app is undeployed. The per-email login limit covers brute force against one account, but not password spraying or sign-up abuse | First deploy, or Dec 31, 2026, whichever comes first |
 
 Full record: [`audit/acceptances/ABUSE-001.md`](acceptances/ABUSE-001.md).
+
+## Subprocessors
+
+Started with Lab 9; the rest of the list closes SUBPROC-001.
+
+| Subprocessor | Purpose | Data sent | Region | Added |
+| --- | --- | --- | --- | --- |
+| Sentry (Functional Software, Inc.), org `the-geekio-project`, project `javascript-nextjs` | Server error tracking and new-issue email alerts | Scrubbed error events only: error name, scrubbed message, stack frames (file paths and line numbers), and context the reporter allows (route, method, digest; personal-data keys replaced with `[redacted]`), plus Node.js version and environment. Not sent: request headers, cookies, bodies, query strings, user identity, IP address or server hostname. Sentry still sees the sending server's IP when events arrive and derives an approximate location from it (OBS-004). Free text inside an error message can get through (OBS-003) | US (`us.sentry.io`) | Nov 10, 2026 |
 
 ## Still to assess
 
@@ -67,3 +78,4 @@ Maps to: NIST 800-53 RA-3, RA-7 and CA-5 (plan of action and milestones); ISO 27
 
 - Oct 29: added CHANGE-003. The first CI run on GitHub (triggered when the repo went public) failed before any job started: line 60 of `.github/workflows/ci.yml` holds an unquoted step name containing `: `, which YAML parses as a mapping, so GitHub rejects the whole file. Type check, lint, tests and build have never run in CI, on any commit or Dependabot pull request. The baseline missed it because it only checked that the workflow file existed. The next baseline run validates the workflow as well.
 - Nov 5: wrote the ABUSE-001 acceptance record. Testing the compensating control against each path showed it covers brute force against one account but not password spraying or sign-up abuse, so the register now says so, the acceptance gained a calendar expiry (Dec 31, 2026), and the fix joined the "before first deploy" list.
+- Nov 10: Lab 9 wired Sentry in behind the scrubber and added a new-issue email alert (OBS-001 closed; OBS-002 closed for errors, with uptime monitoring moved to "before first deploy" because there's no deployment to watch). Found while doing it: the agent's documented way to add an error tracker (`setErrorSink()` at startup) never reached the routes, because Next.js bundles instrumentation separately; fixed in the lab. Also found OBS-003 (free text in error messages reaches Sentry) and OBS-004 (Sentry stores an approximate location from the sender's IP). Sentry added as the first entry on the subprocessor list.

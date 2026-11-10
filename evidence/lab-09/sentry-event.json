@@ -1,0 +1,119 @@
+{
+    "id": "6ee630652328408faff5b06c42d5c185",
+    "groupID": "7838579025",
+    "eventID": "6ee630652328408faff5b06c42d5c185",
+    "projectID": "4512405795373056",
+    "size": 3502,
+    "entries": [
+        {
+            "data": {
+                "formatted": "Error: Lab 9 scrub test: could not save contact [email], phone [phone], note: Renewal call went badly"
+            },
+            "type": "message"
+        }
+    ],
+    "dist": null,
+    "message": "Error: Lab 9 scrub test: could not save contact [email], phone [phone], note: Renewal call went badly",
+    "title": "Error: Lab 9 scrub test: could not save contact [email], phone [phone], note: Renewal call went badly",
+    "location": null,
+    "user": {
+        "id": null,
+        "email": null,
+        "username": null,
+        "ip_address": null,
+        "name": null,
+        "geo": {
+            "country_code": "[redacted for publication]",
+            "city": "[redacted for publication]",
+            "region": "[redacted for publication]"
+        },
+        "data": null
+    },
+    "contexts": {
+        "runtime": {
+            "runtime": "node v22.18.0",
+            "name": "node",
+            "version": "v22.18.0",
+            "type": "runtime"
+        },
+        "trace": {
+            "trace_id": "935af5d4639b4af9bce1a7f2b6e5f4dc",
+            "span_id": "a6de65b847b4c11a",
+            "status": "unknown",
+            "type": "trace"
+        }
+    },
+    "sdk": {
+        "name": "sentry.javascript.nextjs",
+        "version": "11.11.0"
+    },
+    "context": {
+        "detail": "Contact [email] asked to be called on [phone]",
+        "email": "[redacted]",
+        "note": "[redacted]",
+        "phone": "[redacted]",
+        "stack": "    at GET (/Users/geekio/Dev/grc-engineering/brand-builder/tidewater/.next/dev/server/chunks/[root-of-the-server]__1g1le0mwt5q9p._.js:67:154)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:80:14)\n    at AppRouteRouteModule.renderToResponse (/Users/geekio/Dev/grc-engineering/brand-builder/tidewater/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:25906)\n    at /Users/geekio/Dev/grc-engineering/brand-builder/tidewater/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:31150\n    at /Users/geekio/Dev/grc-engineering/brand-builder/tidewater/node_modules/next/dist/server/lib/trace/tracer.js:255:36\n    at /Users/geekio/Dev/grc-engineering/brand-builder/tidewater/node_modules/next/dist/server/lib/trace/tracer.js:281:88\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)\n    at /Users/geekio/Dev/grc-engineering/brand-builder/tidewater/node_modules/next/dist/server/lib/router-utils/\u2026",
+        "where": "lab-09-scrub-test"
+    },
+    "packages": {},
+    "type": "default",
+    "metadata": {
+        "title": "Error: Lab 9 scrub test: could not save contact [email], phone [phone], note: Renewal call went badly"
+    },
+    "tags": [
+        {
+            "key": "environment",
+            "value": "development"
+        },
+        {
+            "key": "interface_type",
+            "value": "contexts"
+        },
+        {
+            "key": "level",
+            "value": "error"
+        },
+        {
+            "key": "runtime",
+            "value": "node v22.18.0"
+        },
+        {
+            "key": "runtime.name",
+            "value": "node"
+        },
+        {
+            "key": "turbopack",
+            "value": "True"
+        }
+    ],
+    "platform": "node",
+    "dateReceived": "2026-11-10T06:13:16.093672Z",
+    "errors": [],
+    "occurrence": null,
+    "_meta": {
+        "entries": {},
+        "message": null,
+        "user": null,
+        "contexts": null,
+        "sdk": null,
+        "context": null,
+        "packages": null,
+        "tags": {}
+    },
+    "crashFile": null,
+    "culprit": "",
+    "dateCreated": "2026-11-10T06:13:16.011000Z",
+    "fingerprints": [
+        "f76c0a141b4a8a54812d16ff858d96bf"
+    ],
+    "groupingConfig": {
+        "enhancements": "KLUv_SAd6QAAkwORuGFsbC1wbGF0Zm9ybXM6MjAyNi0wMS0yMJA#KLUv_SAd6QAAkwORuGFsbC1wbGF0Zm9ybXM6MjAyNi0wMS0yMJA#KLUv_SAd6QAAkwORuGFsbC1wbGF0Zm9ybXM6MjAyNi0wMS0yMJA",
+        "id": "newstyle:2026-01-20"
+    },
+    "release": null,
+    "userReport": null,
+    "sdkUpdates": [],
+    "resolvedWith": [],
+    "nextEventID": null,
+    "previousEventID": null
+}
