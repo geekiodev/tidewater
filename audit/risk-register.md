@@ -33,7 +33,7 @@ Built Oct 29, 2026 from `audit/findings.json` (baseline of `v0-as-built`, commit
 | SECRETS-001: secrets in local .env files | G3.7 | High | Fix | Lab 11: platform secret store, per-person access, rotation record | Before first deploy |
 | KEYS-001: legacy Supabase anon and service_role keys | G3.7 | Low | Fix | Lab 11: the new hosted project uses publishable and secret keys | Before first deploy |
 | OBS-002 (uptime): nothing watches `/api/health` | G3.3 | High | Fix | Uptime check on the deployed `/api/health`, alerting the owner; can't exist until there is a deployment | Before first deploy |
-| OBS-003: free text in error messages passes the scrubber | G2.4 | Medium | Fix | Report errors with fixed messages and send identifiers as context, or drop the message for unknown error types; test that a note's text never reaches Sentry | Before first deploy |
+| OBS-003: free text in error messages passes the scrubber, reaches Sentry and is copied into alert emails | G2.4 | Medium | Fix | Report errors with fixed messages and send identifiers as context, or drop the message for unknown error types; test that a note's text never reaches Sentry | Before first deploy |
 | OBS-004: Sentry stores an approximate location for each event | G2.4 | Low | Fix | Turn on "Prevent storing of IP addresses" in the Sentry project and check a new event has no `user.geo` | Before first deploy |
 | ABUSE-001 (at expiry): client IP from a header clients can set | G2.5 | Medium | Fix | Read the client IP only from the hosting platform's trusted header; test with a spoofed header | Before first deploy |
 | DEPS-001: audit results differ by environment | G3.6 | Low | Fix | Lab 2: npm audit in CI on a schedule, dated output kept | Before first deploy |

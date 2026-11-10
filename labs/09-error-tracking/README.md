@@ -54,7 +54,7 @@ On branch `lab-09-error-tracking`:
 | Handled error with personal data | `sentry-event.json` | Stored in Sentry with `[email]` and `[phone]` in the message, and `email`, `phone` and `note` context keys as `[redacted]`. No user identity, IP address, request data or hostname. **The note text in the message got through** ("Renewal call went badly"): OBS-003 |
 | Unhandled error in a route | `sentry-event-unhandled.json` | Arrived only through the reporter (`where: onRequestError`), scrubbed the same way. No raw event: Sentry holds 2 events for the 2 errors |
 | What Sentry adds itself | both event files | `user.geo` with the sender's city, derived from the uploading machine's IP (redacted in these files before publishing): OBS-004. Sentry's own server-side scrubber also replaced `path` and `route` with `[Filtered]` because they contain "auth" |
-| Alert | `alert-fired.txt`, `sentry-alert-rule.json` | New issue first seen 06:15:26 UTC; rule triggered 06:15:49 UTC |
+| Alert | `alert-fired.txt`, `sentry-alert-rule.json` | New issue first seen 06:15:26 UTC; rule triggered 06:15:49 UTC; the owner's email arrived at 06:19 UTC as a digest with one other alert. Sentry's built-in high-priority rule also emailed about the first two test issues |
 | Uptime alerting on `/api/health` | `alert-fired.txt` | Not possible yet: there's no deployed URL to watch. Moved to "Fix before first deploy" (OBS-002, uptime) |
 
 ## 7. Evidence kept
@@ -66,13 +66,13 @@ Everything above is in `evidence/lab-09/`. No file contains the DSN or the auth 
 - [x] Server errors reach Sentry, and only through the scrubber (both test events).
 - [x] Email and phone in a message or context never reach Sentry (`sentry-event.json`).
 - [ ] Free-text personal data in an error message never reaches Sentry (OBS-003, open).
-- [x] A new issue triggers an email to the owner (rule triggered 06:15:49 UTC).
+- [x] A new issue triggers an email to the owner (rule triggered 06:15:49 UTC, email received 06:19 UTC).
 - [ ] An outage of `/api/health` alerts the owner (needs a deployment; OBS-002 uptime).
 
 ## Open after this lab
 
-- **OBS-003:** the scrubber matches patterns (emails, phone numbers, quoted values), so a sentence such as a note's text inside an error message passes through.
+- **OBS-003:** the scrubber matches patterns (emails, phone numbers, quoted values), so a sentence such as a note's text inside an error message passes through. It doesn't stop at Sentry: alert emails put the message in the subject line and body, so it's copied to every recipient's inbox.
 - **OBS-004:** turn on "Prevent storing of IP addresses" in the Sentry project.
 - **Browser errors** aren't reported at all; adding the browser SDK would need the same scrutiny.
 - **Next.js's dev server** still prints raw error messages to the terminal, outside the reporter, as the build log already noted.
-- **Default Sentry alert:** the project also has Sentry's built-in "Send a notification for high priority issues" rule, which also fires for new issues Sentry rates high priority (both first test issues were rated high).
+- **Default Sentry alert:** the project also has Sentry's built-in "Send a notification for high priority issues" rule, which also fires for new issues Sentry rates high priority (both first test issues were rated high, and it emailed about them). Two rules now email the owner about the same kinds of issue.

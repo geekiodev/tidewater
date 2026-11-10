@@ -7,6 +7,14 @@ Alert rule: "Lab 9: email on every new issue" (Sentry workflow 6319295, created 
 06:15:26  new error reported through the scrubber ("Lab 9 alert test: ...") -> new issue 7838581340, first seen 06:15:26
 06:15:49  rule lastTriggered (from the workflows API)
 
-Email received: see the owner's screenshot.
+Emails received by the owner (screenshots kept by the owner, times shown in EST, UTC-5):
+  01:13 EST (06:13 UTC)  "JAVASCRIPT-NEXTJS-1 - Error: Lab 9 scrub test: ..." triggered by Sentry's built-in rule
+                         "Send a notification for high priority issues". The subject line and body carry the
+                         scrubbed message, including the note text that got past the scrubber (OBS-003).
+  01:19 EST (06:19 UTC)  "JAVASCRIPT-NEXTJS-3 - 2 new alerts since Nov. 10, 2026, 6:13 a.m. UTC", a digest:
+                         "Lab 9 alert test" triggered by "Lab 9: email on every new issue", and "Lab 9 unhandled
+                         test" triggered by the built-in rule.
+
+So the Lab 9 rule's email arrived about 3.5 minutes after the rule fired, batched into a digest with another alert.
 
 Uptime alerting on /api/health: not set up. It needs a deployed URL for an uptime monitor to call, and Tidewater is not deployed. Moved to "Fix before first deploy" in the risk register as OBS-002 (uptime).
