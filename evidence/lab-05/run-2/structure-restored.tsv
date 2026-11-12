@@ -1,0 +1,70 @@
+function	private.handle_new_user()	87c929ba0493d98558840f60fa5853a5
+function	private.is_workspace_member(p_workspace_id uuid)	05592f171f0549a1ce8bced3eecff278
+function	private.is_workspace_owner(p_workspace_id uuid)	dbb41e10eeb04ce5274fec6b26132f8f
+function	private.set_updated_at()	6eda72df1356344b789cc5f9435a8a0f
+function	private.workspace_is_active(p_workspace_id uuid)	7319594fe4c95b15483f02a81ac7a7bd
+function	public.accept_invitation(p_token text)	1901905e5e3735ef69960ffb410a58dc
+function	public.apply_stripe_event(p_event_id text, p_event_type text, p_event_created timestamp with time zone, p_workspace_id uuid, p_customer_id text, p_subscription_id text, p_status text, p_plan text, p_current_period_end timestamp with time zone)	41ecd8a21112a0b1f78f90bd2c9db8d1
+function	public.create_workspace(p_name text)	60f8bc39bb59ea92813e6065db297c29
+function	public.list_workspace_members()	749e44abf183e23d275bbab382cb520d
+function	public.rate_limit_hit(p_bucket text, p_limit integer, p_window_seconds integer)	59e24c1d22d2469c9e7d2bf0195a8507
+function	public.reserve_ai_brief(p_workspace_id uuid, p_monthly_limit integer)	69d7cd93f50f57e8c8351b8622eb534b
+function	public.settle_ai_brief(p_workspace_id uuid, p_succeeded boolean, p_input_tokens integer, p_output_tokens integer)	81608442ce7c450ec380467984ce6348
+grant	private.rate_limits postgres	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+grant	private.rate_limits service_role	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+grant	private.stripe_events postgres	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+grant	private.stripe_events service_role	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+grant	public.ai_usage authenticated	SELECT
+grant	public.ai_usage postgres	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+grant	public.ai_usage service_role	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+grant	public.clients authenticated	DELETE,INSERT,SELECT
+grant	public.clients postgres	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+grant	public.clients service_role	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+grant	public.contacts authenticated	DELETE,INSERT,SELECT
+grant	public.contacts postgres	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+grant	public.contacts service_role	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+grant	public.notes authenticated	DELETE,INSERT,SELECT
+grant	public.notes postgres	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+grant	public.notes service_role	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+grant	public.workspace_invitations authenticated	DELETE,INSERT,SELECT
+grant	public.workspace_invitations postgres	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+grant	public.workspace_invitations service_role	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+grant	public.workspace_members authenticated	DELETE,SELECT
+grant	public.workspace_members postgres	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+grant	public.workspace_members service_role	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+grant	public.workspaces authenticated	SELECT
+grant	public.workspaces postgres	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+grant	public.workspaces service_role	DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+policy	public.ai_usage.ai_usage_select_members	fd694e7ad7374ce1bc4fbe8fa87a22e7
+policy	public.clients.clients_delete	6582af4f97e85bd88a0c259dd9403864
+policy	public.clients.clients_insert	7c833c5f5841942bfb34b1177beed36a
+policy	public.clients.clients_select	255b583b3e3d53471381bf6c400f6e5c
+policy	public.clients.clients_update	0b5df4591ecdf66da61d6025d025ef8d
+policy	public.contacts.contacts_delete	e3b1f89d1b8049dbb47a0b72bab64063
+policy	public.contacts.contacts_insert	7f57eaf089618e7798e9d724aec670ba
+policy	public.contacts.contacts_select	ff11a70ae7a142b8b1ee84419b8e79d4
+policy	public.contacts.contacts_update	f3a04935411f9f32a4861a9b8b5665f9
+policy	public.notes.notes_delete	bd512ac7796a969de2b4787a5eb34907
+policy	public.notes.notes_insert	bfb3443af4891de96ae535d9ed60ce12
+policy	public.notes.notes_select	b530bdc559c7905028862cfb66753156
+policy	public.notes.notes_update	db264fe44827c3b5be609f7ea24a585e
+policy	public.workspace_invitations.invitations_delete_owner	b6089091e7b52f97eae3fb60e2ce5806
+policy	public.workspace_invitations.invitations_insert_owner	be1b6f65a060e892b8826fba51cbf132
+policy	public.workspace_invitations.invitations_select_owner	98e34f673cb0ef369120e6cee980eebb
+policy	public.workspace_members.members_delete_by_owner	522d57b48494e6649feb9e2e7ae47675
+policy	public.workspace_members.members_select_same_workspace	e896904e12d01d56acfc6be38cb6dd9e
+policy	public.workspaces.workspaces_select_members	709191f6bba5eac086ee2eda91db420e
+policy	public.workspaces.workspaces_update_owners	28a2963c62298c7bc79647df51438fc1
+rls	private.rate_limits	true/false
+rls	private.stripe_events	true/false
+rls	public.ai_usage	true/false
+rls	public.clients	true/false
+rls	public.contacts	true/false
+rls	public.notes	true/false
+rls	public.workspace_invitations	true/false
+rls	public.workspace_members	true/false
+rls	public.workspaces	true/false
+trigger	auth.users.on_auth_user_created	7802d9f42b947bca0346242330de1816
+trigger	public.clients.clients_set_updated_at	308c755ec1334914d359a4df5ac3cfb1
+trigger	public.contacts.contacts_set_updated_at	de0174ada139b655710087c1f3fff04a
+trigger	public.notes.notes_set_updated_at	67a1987c3ef852013d36f23f6248e457

@@ -1,0 +1,19 @@
+2026-11-12T02:49:52Z  Restore drill start
+2026-11-12T02:49:52Z  Host: Darwin arm64, Apple M1 Pro
+2026-11-12T02:49:52Z  Docker: Docker version 29.9.1, build dfc520d
+2026-11-12T02:49:52Z  Supabase CLI: 2.121.0
+2026-11-12T02:49:52Z  Database image: ghcr.io/supabase/postgres:17.11.0.004
+2026-11-12T02:49:53Z  Server: PostgreSQL 17.11 on aarch64-unknown-linux-gnu, compiled by gcc (GCC) 15.2.0, 64-bit
+2026-11-12T02:49:53Z  pg_dump: pg_dump (PostgreSQL) 17.11
+2026-11-12T02:49:53Z  pg_restore: pg_restore (PostgreSQL) 17.11
+2026-11-12T02:49:53Z  Source: 64 tables, 604 rows
+2026-11-12T02:49:53Z  pg_dump (custom format) of 'postgres': 0.2 s, 486599 bytes
+2026-11-12T02:49:53Z  Created empty scratch database 'lab05_restore_drill'
+2026-11-12T02:49:54Z  pg_restore into 'lab05_restore_drill': 0.5 s, exit code 0, 0 error(s) (restore-stderr.txt)
+2026-11-12T02:49:54Z  Verification queries: 0.2 s
+2026-11-12T02:49:54Z  Row counts: 64 of 64 tables match
+2026-11-12T02:49:54Z  Checksums: all 9 Tidewater tables identical
+2026-11-12T02:49:54Z  Access controls: all 70 RLS flags, policies, triggers, functions and grants identical
+2026-11-12T02:49:54Z  Dump + restore + verification: 1.4 s
+2026-11-12T02:49:54Z  Deleted the dump and dropped 'lab05_restore_drill'
+2026-11-12T02:49:54Z  Restore drill end
