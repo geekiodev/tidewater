@@ -1,0 +1,59 @@
+# 2026-11-12T03:20:52Z, local Supabase. What the signed-in (authenticated) and anon roles may do.
+
+## Table privileges
+public.ai_usage | authenticated | SELECT
+public.clients | authenticated | DELETE,INSERT,SELECT
+public.contacts | authenticated | DELETE,INSERT,SELECT
+public.notes | authenticated | DELETE,INSERT,SELECT
+public.workspace_invitations | authenticated | DELETE,INSERT,SELECT
+public.workspace_members | authenticated | DELETE,SELECT
+public.workspaces | authenticated | SELECT
+
+## Column privileges (INSERT, UPDATE)
+clients | authenticated | INSERT | created_at,created_by,id,name,updated_at,website,workspace_id
+clients | authenticated | UPDATE | name,website
+contacts | authenticated | INSERT | client_id,created_at,email,full_name,id,job_title,phone,updated_at,workspace_id
+contacts | authenticated | UPDATE | email,full_name,job_title,phone
+notes | authenticated | INSERT | author_id,body,client_id,created_at,id,updated_at,workspace_id
+notes | authenticated | UPDATE | body
+workspace_invitations | authenticated | INSERT | accepted_at,accepted_by,created_at,email,expires_at,id,invited_by,token_hash,workspace_id
+workspaces | authenticated | UPDATE | name
+
+## Functions: security definer | anon may execute | authenticated may execute
+private.handle_new_user() | t | f | f
+private.is_workspace_member(p_workspace_id uuid) | t | f | t
+private.is_workspace_owner(p_workspace_id uuid) | t | f | t
+private.set_updated_at() | f | f | f
+private.workspace_is_active(p_workspace_id uuid) | t | f | t
+public.accept_invitation(p_token text) | t | f | t
+public.apply_stripe_event(p_event_id text, p_event_type text, p_event_created timestamp with time zone, p_workspace_id uuid, p_customer_id text, p_subscription_id text, p_status text, p_plan text, p_current_period_end timestamp with time zone) | t | f | f
+public.create_workspace(p_name text) | t | f | t
+public.list_workspace_members() | t | f | t
+public.rate_limit_hit(p_bucket text, p_limit integer, p_window_seconds integer) | t | f | f
+public.reserve_ai_brief(p_workspace_id uuid, p_monthly_limit integer) | t | f | f
+public.settle_ai_brief(p_workspace_id uuid, p_succeeded boolean, p_input_tokens integer, p_output_tokens integer) | t | f | f
+
+## RLS policies: table | policy | command | using | with check
+ai_usage | ai_usage_select_members | SELECT | ( SELECT private.is_workspace_member(ai_usage.workspace_id) AS is_workspace_member) | 
+clients | clients_delete | DELETE | ( SELECT private.is_workspace_member(clients.workspace_id) AS is_workspace_member) | 
+clients | clients_insert | INSERT |  | (( SELECT private.is_workspace_member(clients.workspace_id) AS is_workspace_member) AND ( SELECT private.workspace_is_active(clients.workspace_id) AS workspace_is_active) AND (created_by = ( SELECT uid() AS uid)))
+clients | clients_select | SELECT | ( SELECT private.is_workspace_member(clients.workspace_id) AS is_workspace_member) | 
+clients | clients_update | UPDATE | ( SELECT private.is_workspace_member(clients.workspace_id) AS is_workspace_member) | ( SELECT private.is_workspace_member(clients.workspace_id) AS is_workspace_member)
+contacts | contacts_delete | DELETE | ( SELECT private.is_workspace_member(contacts.workspace_id) AS is_workspace_member) | 
+contacts | contacts_insert | INSERT |  | (( SELECT private.is_workspace_member(contacts.workspace_id) AS is_workspace_member) AND ( SELECT private.workspace_is_active(contacts.workspace_id) AS workspace_is_active))
+contacts | contacts_select | SELECT | ( SELECT private.is_workspace_member(contacts.workspace_id) AS is_workspace_member) | 
+contacts | contacts_update | UPDATE | ( SELECT private.is_workspace_member(contacts.workspace_id) AS is_workspace_member) | ( SELECT private.is_workspace_member(contacts.workspace_id) AS is_workspace_member)
+notes | notes_delete | DELETE | (( SELECT private.is_workspace_member(notes.workspace_id) AS is_workspace_member) AND ((author_id = ( SELECT uid() AS uid)) OR ( SELECT private.is_workspace_owner(notes.workspace_id) AS is_workspace_owner))) | 
+notes | notes_insert | INSERT |  | (( SELECT private.is_workspace_member(notes.workspace_id) AS is_workspace_member) AND ( SELECT private.workspace_is_active(notes.workspace_id) AS workspace_is_active) AND (author_id = ( SELECT uid() AS uid)))
+notes | notes_select | SELECT | ( SELECT private.is_workspace_member(notes.workspace_id) AS is_workspace_member) | 
+notes | notes_update | UPDATE | (( SELECT private.is_workspace_member(notes.workspace_id) AS is_workspace_member) AND (author_id = ( SELECT uid() AS uid))) | (( SELECT private.is_workspace_member(notes.workspace_id) AS is_workspace_member) AND (author_id = ( SELECT uid() AS uid)))
+workspace_invitations | invitations_delete_owner | DELETE | ( SELECT private.is_workspace_owner(workspace_invitations.workspace_id) AS is_workspace_owner) | 
+workspace_invitations | invitations_insert_owner | INSERT |  | (( SELECT private.is_workspace_owner(workspace_invitations.workspace_id) AS is_workspace_owner) AND (invited_by = ( SELECT uid() AS uid)) AND (accepted_at IS NULL) AND (accepted_by IS NULL))
+workspace_invitations | invitations_select_owner | SELECT | ( SELECT private.is_workspace_owner(workspace_invitations.workspace_id) AS is_workspace_owner) | 
+workspace_members | members_delete_by_owner | DELETE | (( SELECT private.is_workspace_owner(workspace_members.workspace_id) AS is_workspace_owner) AND (user_id <> ( SELECT uid() AS uid))) | 
+workspace_members | members_select_same_workspace | SELECT | ( SELECT private.is_workspace_member(workspace_members.workspace_id) AS is_workspace_member) | 
+workspaces | workspaces_select_members | SELECT | ( SELECT private.is_workspace_member(workspaces.id) AS is_workspace_member) | 
+workspaces | workspaces_update_owners | UPDATE | ( SELECT private.is_workspace_owner(workspaces.id) AS is_workspace_owner) | ( SELECT private.is_workspace_owner(workspaces.id) AS is_workspace_owner)
+
+## PostgREST
+18:max_rows = 1000
