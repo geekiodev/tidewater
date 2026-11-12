@@ -1,0 +1,15 @@
+# AFTER the fix (migration 20261111000100), 2026-11-12T03:48:15Z, local Supabase (PostgreSQL 17.11), as lab05-member-1-1@example.com (role member). Same SQL as probe-data-api-writes.sql; psql ON_ERROR_ROLLBACK=on so each refused statement is reported and the rest still run. Everything rolled back.
+t
+-- Format rules that zod enforces in the server actions:
+ERROR:  new row for relation "clients" violates check constraint "clients_website_format"
+ERROR:  new row for relation "contacts" violates check constraint "contacts_email_format"
+ERROR:  new row for relation "clients" violates check constraint "clients_website_format"
+-- Size caps (database check constraints):
+ERROR:  new row for relation "clients" violates check constraint "clients_website_check"
+ERROR:  new row for relation "clients" violates check constraint "clients_name_check"
+-- Billing columns and the billing function:
+ERROR:  permission denied for table workspaces
+HINT:  Grant the required privileges to the current role with: GRANT UPDATE ON public.workspaces TO authenticated;
+ERROR:  permission denied for function apply_stripe_event
+ERROR:  permission denied for function reserve_ai_brief
+# The contacts UPDATE sets email and phone together, so Postgres reports the first failing constraint (email). The phone rule on its own is shown in tests/db/review-fixes.test.ts ("call me maybe!!" refused with 23514).

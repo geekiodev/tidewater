@@ -1,0 +1,12 @@
+# AFTER the fix (migration 20261111000100), 2026-11-12T03:48:15Z, local Supabase (PostgreSQL 17.11), as lab05-member-1-1@example.com (role member). Same SQL as probe-client-delete-cascade.sql; psql ON_ERROR_ROLLBACK=on so each refused statement is reported and the rest still run. Everything rolled back.
+t
+member deletes the owner's notes directly: 0 rows (RLS: author or owner only)
+member deletes the client: 0 row
+notes left: 0 of 4
+contacts left: 0 of 3
+
+# Read afterwards as supabase_admin (the probe itself was rolled back): the client and everything on it are still there.
+client still present: 1
+notes on it: 4
+contacts on it: 3
+# The 'notes left' and 'contacts left' lines above count rows whose client is gone; 0 here means nothing was orphaned or cascaded, because the client delete was refused.

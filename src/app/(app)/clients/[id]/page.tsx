@@ -215,12 +215,14 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
             <input name="website" type="url" defaultValue={client.website ?? ""} maxLength={LIMITS.website} />
           </label>
         </ActionForm>
-        <form action={deleteClientAction}>
-          <input type="hidden" name="clientId" value={id} />
-          <ConfirmSubmit message="Delete this client and all of its contacts and notes? This can't be undone.">
-            Delete client
-          </ConfirmSubmit>
-        </form>
+        {ctx.role === "owner" ? (
+          <form action={deleteClientAction}>
+            <input type="hidden" name="clientId" value={id} />
+            <ConfirmSubmit message="Delete this client and all of its contacts and notes? This can't be undone.">
+              Delete client
+            </ConfirmSubmit>
+          </form>
+        ) : null}
       </section>
     </main>
   );

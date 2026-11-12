@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireWorkspace, SUBSCRIPTION_REQUIRED_MESSAGE } from "@/lib/auth";
+import { AuthorizationError, requireOwner, requireWorkspace, SUBSCRIPTION_REQUIRED_MESSAGE } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { clientInputSchema, contactInputSchema, idSchema, noteInputSchema } from "@/lib/validation/crm";
 import { formDataToObject, zodFieldErrors, type FormState } from "@/lib/forms";
@@ -75,7 +75,16 @@ export async function updateClientAction(_prev: FormState, formData: FormData): 
 }
 
 export async function deleteClientAction(formData: FormData): Promise<void> {
-  const ctx = await requireWorkspace();
+  // Owner only: deleting a client also deletes every contact and note on it,
+  // including notes by other people (AUTHZ-001). The RLS delete policy
+  // enforces the same rule.
+  let ctx;
+  try {
+    ctx = await requireOwner();
+  } catch (e) {
+    if (e instanceof AuthorizationError) return;
+    throw e;
+  }
   const id = parseId(formData.get("clientId"));
   if (!id) return;
   const supabase = await createClient();

@@ -24,8 +24,8 @@ Built Oct 29, 2026 from `audit/findings.json` (baseline of `v0-as-built`, commit
 | OBS-001: errors go to stderr only | G2.4 (L2 blocker) | High | Fix | Lab 9: error tracker wired in, test event recorded. **Closed Nov 10**: server errors reach Sentry only through the scrubber | Nov 8 |
 | OBS-002: no alert reaches a named person | G3.3 | High | Fix | Lab 9: uptime check on /api/health, alerts to the owner. **Closed Nov 10 for errors**: a new Sentry issue emails the owner. Uptime moved to "before first deploy" | Nov 8 |
 | SUBPROC-001: no subprocessor list | G4.9 (L4, pulled forward) | Medium | Fix | Subprocessor list for Supabase, Stripe, Anthropic, Sentry and hosting (Sentry recorded below) | Nov 12 |
-| AUTHZ-001: a member can delete other people's notes by deleting the client | G2.1 (L2 blocker) | Medium | Fix | Owner-only client deletion (RLS and `requireOwner()`), or only when no one else has notes on it; database test for the cascade. Found in the Nov 11 review | Nov 12 (proposed) |
-| VALID-001: the Supabase Data API accepts values the zod schemas reject | G2.6 (L2 blocker) | Low | Fix | Format rules as database check constraints, or no direct insert and update grants for signed-in users; test through the Data API. Found in the Nov 11 review | Nov 12 (proposed) |
+| AUTHZ-001: a member can delete other people's notes by deleting the client | G2.1 (L2 blocker) | Medium | Fix | Owner-only client deletion (RLS and `requireOwner()`), or only when no one else has notes on it; database test for the cascade. Found in the Nov 11 review. **Closed Nov 11**: owner-only delete in RLS and in the action; a member's delete is refused (test) | Nov 12 |
+| VALID-001: the Supabase Data API accepts values the zod schemas reject | G2.6 (L2 blocker) | Low | Fix | Format rules as database check constraints, or no direct insert and update grants for signed-in users; test through the Data API. Found in the Nov 11 review. **Closed Nov 11**: check constraints for website, email and phone matching zod; the probe values are refused (tests) | Nov 12 |
 
 ## Fix before first deploy
 
@@ -60,14 +60,14 @@ Started with Lab 9; the rest of the list closes SUBPROC-001.
 
 ## Still to assess
 
-G2.1 (server-side authorization) and G2.6 (input validation) were reviewed route by route on Nov 11 ([`review-g2.1-g2.6.md`](review-g2.1-g2.6.md)). Both fail on one path each: AUTHZ-001 and VALID-001 above. G3.6 (dependency patching) is still pending, owner @geekiodev.
+G2.1 (server-side authorization) and G2.6 (input validation) were reviewed route by route on Nov 11 ([`review-g2.1-g2.6.md`](review-g2.1-g2.6.md)). Both failed on one path each (AUTHZ-001 and VALID-001 above). Both were fixed the same day, and both gates now pass. G3.6 (dependency patching) is still pending, owner @geekiodev.
 
 ## Where this leaves the level
 
 | | Level | What stands in the way |
 | --- | --- | --- |
-| Now (Nov 11) | L1 | G2.1 (AUTHZ-001) and G2.6 (VALID-001), from the Nov 11 review. G2.7 (Lab 3), G2.4 (Lab 9) and G2.3 (Lab 5, local) pass |
-| After Arc 1 (Nov 12) | L2, if AUTHZ-001 and VALID-001 are fixed | G3.3 (uptime), G3.4, G3.6, G3.7, G3.8 |
+| Now (Nov 11) | L2 | Every L2 gate passes: G2.7 (Lab 3), G2.4 (Lab 9), G2.3 (Lab 5, local), G2.1 and G2.6 (Nov 11 review, findings fixed). L3 is held by G3.3 (uptime), G3.4, G3.6, G3.7, G3.8 |
+| After Arc 1 (Nov 12) | L2 | G3.3 (uptime), G3.4, G3.6, G3.7, G3.8 |
 | First deploy | L3 target | Nothing open: ABUSE-001's acceptance ends and its fix is due the same day |
 
 ## Sign-off
@@ -83,3 +83,4 @@ Maps to: NIST 800-53 RA-3, RA-7 and CA-5 (plan of action and milestones); ISO 27
 - Nov 10: Lab 9 wired Sentry in behind the scrubber and added a new-issue email alert (OBS-001 closed; OBS-002 closed for errors, with uptime monitoring moved to "before first deploy" because there's no deployment to watch). Found while doing it: the agent's documented way to add an error tracker (`setErrorSink()` at startup) never reached the routes, because Next.js bundles instrumentation separately; fixed in the lab. Also found OBS-003 (free text in error messages reaches Sentry) and OBS-004 (Sentry stores an approximate location from the sender's IP). Sentry added as the first entry on the subprocessor list.
 - Nov 11: Lab 5 set RTO 4 hours and RPO 24 hours (committed before the drill), seeded every Tidewater table with `@example.com` dummy data, and restored a `pg_dump` of the local database into an empty scratch database: 64 of 64 tables matched on row count, the 9 Tidewater tables on content, and 70 RLS flags, policies, triggers, functions and grants were identical. DATA-001 and DATA-002 closed for the local database; the hosted re-drill stays as the note under "Fix before first deploy". Three days past the Nov 8 due date. The "Now" row under "Where this leaves the level" brought up to date: it still listed G2.4 and G2.7, closed by Labs 9 and 3.
 - Nov 11: the phase 2 review of G2.1 and G2.6 covered all 19 server actions, 4 route handlers and direct writes through the Supabase Data API. Both gates fail on one path each: AUTHZ-001 (a member can delete other people's notes by deleting the client) and VALID-001 (the Data API accepts values the zod schemas reject). Both added to "Fix during Arc 1" with a proposed Nov 12 due date. OBS-004 recorded as closed on Nov 10 ("Prevent storing of IP addresses" turned on in the Sentry project), and the Lab 9 Sentry auth token as revoked the same day, both as reported by the owner. OBS-001 and OBS-002 rows marked closed, as the Nov 10 entry already said. Re-audit: `audit/findings.json` brought up to date and the baseline script re-run (`audit/evidence/rerun-2026-11-11/`).
+- Nov 11 (later): AUTHZ-001 and VALID-001 fixed in one pull request (migration `20261111000100`). Client deletion is now owner-only, in the RLS policy and in the action. Check constraints now mirror the zod format rules for website, email and phone; existing rows were checked against them first and all passed. Database tests show a member's delete is refused, the probe values are refused, and the database agrees with zod on 28 sample values. The two probes were re-run as "after" evidence. G2.1 and G2.6 pass, so the level is now L2.

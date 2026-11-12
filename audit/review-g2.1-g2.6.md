@@ -7,7 +7,9 @@ The baseline left G2.1 and G2.6 pending until every write path had been reviewed
 - **G2.1:** authorization is checked on the server, with workspace and role read from the database and never trusted from the browser. Billing columns are not writable by users.
 - **G2.6:** every write path is validated with a zod schema with size caps. List endpoints cap page size.
 
-**Result: G2.1 fails (AUTHZ-001, Medium) and G2.6 fails (VALID-001, Low).** Every server action and route handler meets both criteria except one action, `deleteClientAction`, on G2.1. The other failure is a write path outside the app's own code: the Supabase Data API, which any signed-in user can call directly with their own session token.
+**Update, Nov 11 (later): both findings are fixed and both gates pass.** See "Fixed" at the end. The rest of this document is the review as first written.
+
+**Result at review time: G2.1 fails (AUTHZ-001, Medium) and G2.6 fails (VALID-001, Low).** Every server action and route handler meets both criteria except one action, `deleteClientAction`, on G2.1. The other failure is a write path outside the app's own code: the Supabase Data API, which any signed-in user can call directly with their own session token.
 
 ## How the app is put together (what was checked)
 
@@ -100,3 +102,21 @@ Pass.
 Both block L2, and both are small fixes. They're in the risk register with a proposed due date of Nov 12. Until they're fixed, the app stays at L1.
 
 Maps to: NIST 800-53 AC-3 (access enforcement), AC-6 (least privilege), SI-10 (information input validation); OWASP ASVS V4 (access control) and V5 (validation); SOC 2 CC6.1; ISO 27001:2022 A.8.3, A.8.28.
+
+## Fixed (Nov 11, later the same day)
+
+Both fixes are in one pull request: migration `supabase/migrations/20261111000100_owner_client_delete_and_format_checks.sql`, plus a change to `deleteClientAction`.
+
+- **AUTHZ-001:** the `clients_delete` policy (any member) is replaced by `clients_delete_owner`, which allows the owner only. `deleteClientAction` now calls `requireOwner()`, and the client page shows the delete button to the owner only.
+- **VALID-001:** three new check constraints, `clients_website_format`, `contacts_email_format` and `contacts_phone_format`, use the same patterns as the zod schemas (zod 4.6's default email pattern). Every existing row was checked against them before they were added and all passed (`after-existing-rows.txt`). Postgres also validated every row when the constraints were added.
+
+**Tests** (`tests/db/review-fixes.test.ts`, run as the signed-in role, the way the Data API runs a request):
+
+- A member's client delete removes 0 rows, and the client's notes and contacts stay. The owner's delete still works.
+- The four probe values (a `javascript:` website, an `ftp://` website, "not an email", "call me maybe!!") are refused with a check violation (23514).
+- The database and zod agree on 28 sample values (9 websites, 12 emails, 7 phone numbers).
+- With the migration removed, 4 of the 5 new tests fail. The fifth, the owner's delete, passes either way.
+
+**After evidence:** `after-probe-data-api-writes.txt` (every probe value refused, size caps and billing still refused) and `after-probe-client-delete-cascade.txt` (the member's client delete removes 0 rows; all 4 notes and 3 contacts are still there).
+
+**G2.1: pass. G2.6: pass.**

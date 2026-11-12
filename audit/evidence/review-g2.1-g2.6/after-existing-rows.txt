@@ -1,0 +1,4 @@
+# 2026-11-12T03:48:15Z: existing rows checked against the new format rules before the constraints were added (local postgres and tidewater_test databases). 0 = no row would be refused.
+postgres: clients 32, website bad 0; contacts 92, email bad 0, phone bad 0
+tidewater_test: clients 3, website bad 0; contacts 2, email bad 0, phone bad 0
+After adding them, re-checked by Postgres itself: the constraints were added without NOT VALID, so Postgres validated every existing row (migration applied without error).
