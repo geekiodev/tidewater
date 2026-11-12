@@ -1,0 +1,6 @@
+# 2026-11-12T03:20:46Z, local Supabase (PostgreSQL 17.11), as lab05-member-1-1@example.com (role member)
+t
+member deletes the owner's notes directly: 0 rows (RLS: author or owner only)
+member deletes the client: 1 row
+notes left: 0 of 4
+contacts left: 0 of 3

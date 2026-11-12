@@ -1,0 +1,14 @@
+# 2026-11-12T03:20:46Z, local Supabase (PostgreSQL 17.11), as lab05-member-1-1@example.com (role member)
+t
+-- Format rules that zod enforces in the server actions:
+clients.website accepted: javascript:alert(document.cookie)
+contacts.email/phone accepted: not an email / call me maybe!!
+clients insert accepted: name='   x' website=ftp://x
+-- Size caps (database check constraints):
+ERROR:  new row for relation "clients" violates check constraint "clients_website_check"
+ERROR:  new row for relation "clients" violates check constraint "clients_name_check"
+-- Billing columns and the billing function:
+ERROR:  permission denied for table workspaces
+HINT:  Grant the required privileges to the current role with: GRANT UPDATE ON public.workspaces TO authenticated;
+ERROR:  permission denied for function apply_stripe_event
+ERROR:  permission denied for function reserve_ai_brief
