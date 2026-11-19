@@ -1,0 +1,9 @@
+# Signed-out read of each table through the hosted Data API with the publishable key, 2026-11-19T11:00:28Z. 42501 = the table exists and signed-out access is refused (grants revoked); PGRST205 = no such table, for contrast.
+workspaces             42501 HTTP 401
+workspace_members      42501 HTTP 401
+workspace_invitations  42501 HTTP 401
+clients                42501 HTTP 401
+contacts               42501 HTTP 401
+notes                  42501 HTTP 401
+ai_usage               42501 HTTP 401
+no_such_table          PGRST205 HTTP 404

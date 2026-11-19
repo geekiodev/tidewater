@@ -5,8 +5,8 @@ import type { Database } from "@/lib/database.types";
 import { supabasePublicEnv } from "@/lib/env";
 
 /**
- * Supabase client acting as the signed-in user (anon key + the user's session
- * cookie). Every query made with it is subject to row-level security, so it
+ * Supabase client acting as the signed-in user (publishable key + the user's
+ * session cookie). Every query made with it is subject to row-level security, so it
  * can only ever see the caller's own workspace.
  */
 export async function createClient() {
@@ -14,7 +14,7 @@ export async function createClient() {
   const cookieStore = await cookies();
   const env = supabasePublicEnv();
 
-  return createServerClient<Database>(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+  return createServerClient<Database>(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
     cookies: {
       getAll() {
         return cookieStore.getAll();

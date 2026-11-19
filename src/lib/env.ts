@@ -22,13 +22,19 @@ const appSchema = z.object({
   APP_URL: z.url().default("http://localhost:3000"),
 });
 
+// Supabase API keys (not the legacy JWT-based anon / service_role keys).
+// The prefixes are checked so a legacy key can't be configured by mistake.
 const supabasePublicSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20),
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().startsWith("sb_publishable_", {
+    message: "Use a Supabase publishable key (sb_publishable_...), not the legacy anon key",
+  }),
 });
 
 const supabaseServiceSchema = z.object({
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(20),
+  SUPABASE_SECRET_KEY: z.string().startsWith("sb_secret_", {
+    message: "Use a Supabase secret key (sb_secret_...), not the legacy service_role key",
+  }),
 });
 
 const stripeSchema = z.object({

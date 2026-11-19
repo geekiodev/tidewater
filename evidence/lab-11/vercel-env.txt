@@ -1,0 +1,24 @@
+# Vercel project geekiodevs-projects/tidewater: environment variables, 2026-11-19T11:00:30Z. Names, types and environments only; the CLI shows Secret values as Hidden (write-only), and Config values only as an encrypted blob, omitted here.
+# Project created with the CLI from an empty folder outside the repo: no Git integration, no deployments.
+AI_MONTHLY_BRIEF_LIMIT                 Config  Preview
+AI_MONTHLY_BRIEF_LIMIT                 Config  Production
+ANTHROPIC_API_KEY                      Secret  Preview
+ANTHROPIC_API_KEY                      Secret  Production
+ANTHROPIC_MODEL                        Config  Preview
+ANTHROPIC_MODEL                        Config  Production
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY   Config  Preview
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY   Config  Production
+NEXT_PUBLIC_SUPABASE_URL               Config  Preview
+NEXT_PUBLIC_SUPABASE_URL               Config  Production
+SENTRY_DSN                             Secret  Preview
+SENTRY_DSN                             Secret  Production
+STRIPE_PRICE_STARTER                   Config  Preview
+STRIPE_PRICE_STARTER                   Config  Production
+STRIPE_PRICE_TEAM                      Config  Preview
+STRIPE_PRICE_TEAM                      Config  Production
+STRIPE_SECRET_KEY                      Secret  Preview
+STRIPE_SECRET_KEY                      Secret  Production
+SUPABASE_SECRET_KEY                    Secret  Preview
+SUPABASE_SECRET_KEY                    Secret  Production
+
+> No deployments found under geekiodevs-projects.

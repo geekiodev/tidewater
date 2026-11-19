@@ -17,7 +17,7 @@ function req(path: string, init: { method?: string; headers?: Record<string, str
 
 beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
-  vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "test-anon-key-not-real");
+  vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "sb_publishable_test-not-real");
   vi.stubEnv("APP_URL", "http://localhost:3000");
   currentUser = null;
   getUser.mockClear();

@@ -33,7 +33,7 @@ npx supabase start
 
 This starts Postgres, Auth, Studio (http://127.0.0.1:54323) and Mailpit (http://127.0.0.1:54324, where sign-up confirmation emails land). It also applies every migration in `supabase/migrations/`. To reset the database later, run `npx supabase db reset`.
 
-Run `npx supabase status` to print the local API URL, anon key and service-role key.
+Run `npx supabase status` to print the local API URL, publishable key and secret key. Tidewater uses Supabase's publishable and secret keys, not the legacy `anon` and `service_role` keys (the app refuses a legacy key at startup).
 
 ### 4. Configure environment variables
 
@@ -47,8 +47,8 @@ Fill in `.env.local` (it's git-ignored; never commit it):
 |---|---|---|
 | `APP_URL` | `http://localhost:3000` locally | Redirect URLs, CSRF origin check |
 | `NEXT_PUBLIC_SUPABASE_URL` | `npx supabase status` → API URL | Supabase client |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `npx supabase status` → anon key | Supabase client (public by design; RLS protects data) |
-| `SUPABASE_SERVICE_ROLE_KEY` | `npx supabase status` → service_role key | **Server only**: rate limiting, Stripe webhook, AI quota, health check |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `npx supabase status` → Publishable key (`sb_publishable_...`) | Supabase client (public by design; RLS protects data) |
+| `SUPABASE_SECRET_KEY` | `npx supabase status` → Secret key (`sb_secret_...`) | **Server only**: rate limiting, Stripe webhook, AI quota, health check |
 | `STRIPE_SECRET_KEY` | Stripe Dashboard (test mode) → Developers → API keys. Must start with `sk_test_` | Creating Checkout / Portal sessions |
 | `STRIPE_WEBHOOK_SECRET` | Printed by `stripe listen` (see below), starts with `whsec_` | Verifying webhook signatures |
 | `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_TEAM` | Price ids (`price_...`) of two monthly recurring prices you create in Stripe test mode | The only source of plan prices |
@@ -138,7 +138,7 @@ tests/unit/                Proxy access control, login rate limiting, CSRF, CSP,
 tests/db/                  Real-Postgres tests: isolation, roles, invitations, rate limits, billing
 ```
 
-**Security model in one paragraph.** Postgres row-level security is the backstop. Every table has RLS on, and Supabase's default grants are revoked and replaced with the minimum each role needs. Workspace membership is checked in the database from `auth.uid()`. Contacts and notes use composite foreign keys, so they can't point at another workspace's client. Billing columns can only be written by the Stripe webhook (service role). On top of that, every page, server action and API route checks the session on the server and reads the workspace and role from the database; nothing is taken from the browser. The service-role key is used only for rate limiting, the Stripe webhook, the AI quota and the health check, never to serve a user's data.
+**Security model in one paragraph.** Postgres row-level security is the backstop. Every table has RLS on, and Supabase's default grants are revoked and replaced with the minimum each role needs. Workspace membership is checked in the database from `auth.uid()`. Contacts and notes use composite foreign keys, so they can't point at another workspace's client. Billing columns can only be written by the Stripe webhook (service role). On top of that, every page, server action and API route checks the session on the server and reads the workspace and role from the database; nothing is taken from the browser. The Supabase secret key (service role) is used only for rate limiting, the Stripe webhook, the AI quota and the health check, never to serve a user's data.
 
 **Data sent to third parties.** Stripe gets the owner's email (Checkout) and the workspace id in metadata; card details go straight to Stripe's hosted page. Anthropic gets the client's name, contacts' names and job titles, and up to 15 recent notes when a user clicks "Brief me". Contact emails and phone numbers are not sent. Sentry (when `SENTRY_DSN` is set) gets scrubbed server error reports only; see `src/lib/errors/sentry-sink.ts` and the subprocessor table in `audit/risk-register.md`.
 
@@ -160,7 +160,7 @@ Security and compliance work still needed before real customer data
 - No MFA, SSO, session management UI, or account lockout beyond rate limits.
 - No audit logging of who viewed or changed what.
 - No data retention or deletion tooling (GDPR/CCPA requests), backups policy, or DPA/subprocessor documentation.
-- The IP used for rate limiting comes from `X-Forwarded-For`. Deploy behind a proxy that sets it, or rely on the per-email limits.
+- The IP used for per-IP rate limits comes only from `x-vercel-forwarded-for`, and only when running on Vercel (`VERCEL=1`); `X-Forwarded-For` and `X-Real-IP` are ignored because a client can send them. Anywhere else every request counts as the same unknown IP, so self-hosting needs its own trusted header (see `clientIp()` in `src/lib/rate-limit.ts`). Per-email login limits apply everywhere.
 - CODEOWNERS uses a **placeholder owner** (`@tidewater-maintainers-placeholder`). Replace it, then turn on branch protection with "Require review from Code Owners" on GitHub.
 - `src/lib/database.types.ts` is hand-written. Regenerate it with `npx supabase gen types typescript --local`.
 - Deployment (hosting, secrets management, production Supabase project, Stripe live mode) is deliberately out of scope.

@@ -61,11 +61,11 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: requestHeaders } });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   let userId: string | null = null;
-  if (url && anonKey && !isPublicPath(pathname, { apiOnly: true })) {
-    const supabase = createServerClient(url, anonKey, {
+  if (url && publishableKey && !isPublicPath(pathname, { apiOnly: true })) {
+    const supabase = createServerClient(url, publishableKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
