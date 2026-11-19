@@ -1,0 +1,15 @@
+# Hosted project tidewater-staging (kbvdwgqbfrrfhwdqrgyw, us-east-2): migration history, read with the Management API (GET /database/migrations, read-only), 2026-11-19T11:00:26Z
+# Applied by the owner from their own terminal (supabase db push --linked over the IPv4 pooler, password typed at a prompt). The agent prepared the commands and verified the result.
+
+20261019000100  workspaces_and_access
+20261019000200  clients_contacts_notes
+20261019000300  billing
+20261019000400  ai_usage
+20261111000100  owner_client_delete_and_format_checks
+
+# Local files (supabase/migrations):
+20261019000100_workspaces_and_access.sql
+20261019000200_clients_contacts_notes.sql
+20261019000300_billing.sql
+20261019000400_ai_usage.sql
+20261111000100_owner_client_delete_and_format_checks.sql

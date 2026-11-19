@@ -1,0 +1,9 @@
+# Supabase API keys on tidewater-staging, names and types only (GET /api-keys?reveal=false), 2026-11-19T11:00:29Z
+# vercel_production and vercel_preview were created by the owner in the dashboard (the token is read-only for API keys). The agent read them with the token and put each in its Vercel environment. The 'default' secret key was deleted by the owner on 2026-11-19 (gone at 10:54:47Z): tonight's rotation.
+anon  type=legacy
+service_role  type=legacy
+default  type=publishable
+vercel_production  type=secret
+vercel_preview  type=secret
+
+# Each Vercel secret key checked against the hosted API at 2026-11-19T10:49:50Z: vercel_production HTTP 200, vercel_preview HTTP 200; the two values differ.

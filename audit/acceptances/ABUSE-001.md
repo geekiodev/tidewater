@@ -10,6 +10,7 @@
 | Accepted by | @geekiodev |
 | Accepted on | Nov 5, 2026 |
 | Expires | First deploy, or Dec 31, 2026, whichever comes first |
+| Status | **Fix merged Nov 19, 2026 (Lab 11). The acceptance closes at first deploy (planned Tue Nov 24)**, once the deployed app is confirmed to ignore spoofed headers |
 
 ## The risk
 
@@ -50,3 +51,26 @@ The acceptance ends at whichever comes first:
 The risk owner and the person accepting the risk are the same person. A reviewer would expect someone other than the owner to accept residual risk; on a one-person project that isn't possible, so the gap is recorded here and in the risk register rather than hidden.
 
 Maps to: ISO 27001:2022 clause 6.1.3 f (risk owners approve the treatment plan and accept residual risk); NIST 800-53 RA-7 and CA-5; SOC 2 CC9.1.
+
+## Update, Nov 19, 2026: fix merged
+
+Lab 11 changed `clientIp()` (`src/lib/rate-limit.ts`) to read the client IP only from `x-vercel-forwarded-for`, and only when the app runs on Vercel (`VERCEL=1`). `X-Forwarded-For` and `X-Real-IP` are never read. Off Vercel, every request falls into one "unknown" bucket, and the per-email login limit still applies.
+
+**Why that header.** From Vercel's documentation (https://vercel.com/docs/headers/request-headers, last updated 2025-12-13):
+
+- Vercel overwrites `X-Forwarded-For` and does "not forward external IPs", which it says is to prevent IP spoofing.
+- `x-vercel-forwarded-for` "is identical to the `x-forwarded-for` header", and unlike `x-forwarded-for` it isn't overwritten if another proxy is put in front of Vercel.
+
+The page doesn't say in so many words that a client-sent `x-vercel-forwarded-for` is replaced. That's why it is confirmed on the deployment rather than assumed.
+
+**Tested:** `tests/unit/client-ip.test.ts`.
+
+- A spoofed `X-Forwarded-For` or `X-Real-IP` is ignored.
+- Rotating the spoofed value doesn't create new buckets.
+- `x-vercel-forwarded-for` is ignored off Vercel, and a value that isn't an IP is rejected.
+- With the old `clientIp()`, 5 of the 6 tests fail.
+
+**Still to do at first deploy (Tue Nov 24), before this acceptance is closed:**
+
+- Send requests to the deployed app with a forged `X-Forwarded-For` and a forged `x-vercel-forwarded-for`. Confirm that the IP the app uses for rate limiting is the real client's.
+- Check whether Supabase Auth's own rate limits see the real client IP (the existing condition above).

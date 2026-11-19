@@ -2,12 +2,12 @@
 
 Built Oct 29, 2026 from `audit/findings.json` (baseline of `v0-as-built`, commit `70c8ac6`, run Oct 26), plus CHANGE-003, found the same day from the repo's first CI run on GitHub. Owner of every entry: @geekiodev.
 
-**Target:** L3 before the hardened version takes real customer data ("first deploy"). The as-built version is never deployed.
+**Target:** L3 before the first real customer (Gate 2). The first deploy (Gate 1) is to staging with test data only. The as-built version is never deployed.
 
 **How each finding was decided**
 
 1. A finding that blocks the next level gets fixed first, in a lab, with a date.
-2. A finding whose risk only becomes real once there's a hosted deployment with customer data gets fixed before first deploy, tied to that event rather than to a calendar date.
+2. A finding whose risk only becomes real once there's a hosted deployment is tied to that event rather than to a calendar date: Gate 1 (before first deploy) or Gate 2 (before first real customer).
 3. A finding we choose to live with is accepted only with an owner, an expiry and a compensating control.
 4. Card data is already transferred by design: Stripe's hosted checkout means card numbers never touch Tidewater, which typically keeps PCI DSS scope to SAQ A. That's a treatment chosen before the build, so it isn't a finding here.
 
@@ -27,26 +27,39 @@ Built Oct 29, 2026 from `audit/findings.json` (baseline of `v0-as-built`, commit
 | AUTHZ-001: a member can delete other people's notes by deleting the client | G2.1 (L2 blocker) | Medium | Fix | Owner-only client deletion (RLS and `requireOwner()`), or only when no one else has notes on it; database test for the cascade. Found in the Nov 11 review. **Closed Nov 11**: owner-only delete in RLS and in the action; a member's delete is refused (test) | Nov 12 |
 | VALID-001: the Supabase Data API accepts values the zod schemas reject | G2.6 (L2 blocker) | Low | Fix | Format rules as database check constraints, or no direct insert and update grants for signed-in users; test through the Data API. Found in the Nov 11 review. **Closed Nov 11**: check constraints for website, email and phone matching zod; the probe values are refused (tests) | Nov 12 |
 
-## Fix before first deploy
+## Gate 1: before first deploy
 
-| Finding | Gate | Severity | Decision | Closes with | Due |
+Set Nov 19 (Post 12). The first deploy is to staging (`tidewater-staging`), with test data only, planned for Tue Nov 24.
+
+| Finding | Gate | Severity | Decision | Closes with | Status |
 | --- | --- | --- | --- | --- | --- |
-| DELIV-001: no deploy pipeline or tested rollback | G3.4 | High | Fix | Lab 10: pipeline with preview deploys, one rollback performed | Before first deploy |
-| SECRETS-001: secrets in local .env files | G3.7 | High | Fix | Lab 11: platform secret store, per-person access, rotation record | Before first deploy |
-| KEYS-001: legacy Supabase anon and service_role keys | G3.7 | Low | Fix | Lab 11: the new hosted project uses publishable and secret keys | Before first deploy |
-| OBS-002 (uptime): nothing watches `/api/health` | G3.3 | High | Fix | Uptime check on the deployed `/api/health`, alerting the owner; can't exist until there is a deployment | Before first deploy |
-| OBS-003: free text in error messages passes the scrubber, reaches Sentry and is copied into alert emails | G2.4 | Medium | Fix | Report errors with fixed messages and send identifiers as context, or drop the message for unknown error types; test that a note's text never reaches Sentry | Before first deploy |
-| OBS-004: Sentry stores an approximate location for each event | G2.4 | Low | Fix | Turn on "Prevent storing of IP addresses" in the Sentry project and check a new event has no `user.geo`. **Closed Nov 10**: setting turned on by the owner (reported Nov 11; not re-checked with a new event, since the Lab 9 auth token was revoked the same day) | Before first deploy |
-| ABUSE-001 (at expiry): client IP from a header clients can set | G2.5 | Medium | Fix | Read the client IP only from the hosting platform's trusted header; test with a spoofed header | Before first deploy |
-| DEPS-001: audit results differ by environment | G3.6 | Low | Fix | Lab 2: npm audit in CI on a schedule, dated output kept | Before first deploy |
+| SECRETS-001: secrets in local .env files | G3.7 | High | Fix | Lab 11: secrets in Vercel, one sensitive variable per environment, names and access recorded, one rotation | **Closed Nov 19.** Every secret is a Secret-type variable in the Vercel project `tidewater`, added separately for Production and Preview; Supabase secret keys differ per environment; the `default` secret key deleted the same night (rotation). See Gate 2 for the reused Stripe and Anthropic keys |
+| KEYS-001: legacy Supabase anon and service_role keys | G3.7 | Low | Fix | Lab 11: publishable and secret keys in code, docs and Vercel | **Closed Nov 19.** The app refuses a legacy key at startup |
+| SECRETS-002: `.env.local` was readable by every account on the laptop | G3.7 | Medium | Fix | Owner-only permissions | **Closed Nov 19** (found and fixed in Lab 11) |
+| ABUSE-001: client IP from a header clients can set | G2.5 | Medium | Fix | `clientIp()` reads only `x-vercel-forwarded-for`, only on Vercel; spoofed `X-Forwarded-For` ignored (test) | **Fixed in code Nov 19** (Lab 11). Still to do at Tuesday's deploy: confirm on the deployed app that a client-sent `x-vercel-forwarded-for` and `X-Forwarded-For` don't change the IP the app sees |
+| DELIV-001 (part 1): no deploy pipeline that can roll back | G3.4 | High | Fix | Lab 10: pipeline with preview deploys and a rollback path | Open, due Tue Nov 24 |
 
-DATA-001 and DATA-002 are re-run against the hosted database before first deploy; the local drill proves the procedure, not the hosted backups. The re-drill confirms the hosted backup frequency meets the 24-hour RPO, restores a hosted backup into a new, separate project with `labs/05-restore-drill/`'s comparison queries, and times it end to end against the 4-hour RTO.
+Also due at Tuesday's deploy: rotate `vercel_production` (create a new secret key, swap it into Vercel, delete the old one); add `STRIPE_WEBHOOK_SECRET` (from a Stripe endpoint for the deployed URL) and `APP_URL`; push the Auth settings from `supabase/config.toml` to the hosted project, which got the schema only.
+
+## Gate 2: before first real customer
+
+| Finding | Gate | Severity | Decision | Closes with | Status |
+| --- | --- | --- | --- | --- | --- |
+| DELIV-001 (part 2): no rollback has ever been performed | G3.4 | High | Fix | One rollback performed on the deployed app and recorded | Open |
+| OBS-002 (uptime): nothing watches `/api/health` | G3.3 | High | Fix | Uptime check on the deployed `/api/health`; one alert fired and reached the owner | Open |
+| DATA-001, DATA-002 (hosted): the restore drill ran on the local database only | G2.3, G3.5 | High | Fix | Hosted backup frequency meets the 24-hour RPO; a hosted backup restored into a new, separate project, compared with `labs/05-restore-drill/`'s queries, and timed against the 4-hour RTO | Open |
+| DEPS-001: audit results differ by environment | G3.6 | Low | Fix | Dependency checks in CI (`npm audit` on a schedule, dated output kept) | Open |
+| AGENT-001: the AI agent works under the owner's identity | G3.8 | Medium | Fix | The agent gets its own GitHub, Vercel and Supabase identities with only the access it needs, so its changes are attributable and it can't approve or merge its own work | Open. Today the agent uses the owner's `gh`, Vercel CLI login and `.env.local`; Lab 11 kept its access to reading keys a human created, and the human applied the schema |
+| SECRETS-003: staging reuses the local-development Stripe and Anthropic test keys | G3.7 | Medium | Fix | Separate Stripe (restricted) and Anthropic keys for Production and Preview, none shared with local development | Open. The Stripe test key and the Anthropic `tidewater-lab` key in Vercel are the same values as in `.env.local`, for staging only; they must be replaced with per-environment keys before the first real customer |
+| OBS-003: free text in error messages passes the scrubber, reaches Sentry and is copied into alert emails | G2.4 | Medium | Fix | Report errors with fixed messages and send identifiers as context, or drop the message for unknown error types; test that a note's text never reaches Sentry | Open |
+
+Closed before the gates were set: OBS-004 (Sentry stores an approximate location), closed Nov 10 by the owner turning on "Prevent storing of IP addresses".
 
 ## Accepted
 
 | Finding | Gate | Severity | Decision | Compensating control | Expires |
 | --- | --- | --- | --- | --- | --- |
-| ABUSE-001: per-IP rate limits trust X-Forwarded-For | G2.5 (passes) | Medium | Accept, with conditions | No exposure while the app is undeployed. The per-email login limit covers brute force against one account, but not password spraying or sign-up abuse | First deploy, or Dec 31, 2026, whichever comes first |
+| ABUSE-001: per-IP rate limits trust X-Forwarded-For | G2.5 (passes) | Medium | Accept, with conditions | No exposure while the app is undeployed. **The fix was merged in Lab 11 (Nov 19)**; the acceptance closes at first deploy, once the deployed app is confirmed to ignore spoofed headers | First deploy (Tue Nov 24), or Dec 31, 2026, whichever comes first |
 
 Full record: [`audit/acceptances/ABUSE-001.md`](acceptances/ABUSE-001.md).
 
@@ -57,6 +70,8 @@ Started with Lab 9; the rest of the list closes SUBPROC-001.
 | Subprocessor | Purpose | Data sent | Region | Added |
 | --- | --- | --- | --- | --- |
 | Sentry (Functional Software, Inc.), org `the-geekio-project`, project `javascript-nextjs` | Server error tracking and new-issue email alerts | Scrubbed error events only: error name, scrubbed message, stack frames (file paths and line numbers), and context the reporter allows (route, method, digest; personal-data keys replaced with `[redacted]`), plus Node.js version and environment. Not sent: request headers, cookies, bodies, query strings, user identity, IP address or server hostname. Sentry still sees the sending server's IP when events arrive; since Nov 10 the project is set not to store IP addresses (OBS-004, closed). Free text inside an error message can get through (OBS-003) | US (`us.sentry.io`) | Nov 10, 2026 |
+| Supabase, Inc., project `tidewater-staging` (`kbvdwgqbfrrfhwdqrgyw`) | Hosted database and Auth for staging | Schema only so far (applied Nov 19); no customer data until Gate 2 | US East (`us-east-2`) | Nov 19, 2026 |
+| Vercel Inc., project `tidewater` (team `geekiodevs-projects`, Hobby) | Hosting (from the first deploy) and the store for production and preview secrets | Today: environment variables only (Secret-type values are write-only). From first deploy: every request, and the app's server-side processing | Functions region `iad1` (US East) | Nov 19, 2026 |
 
 ## Still to assess
 
@@ -66,9 +81,9 @@ G2.1 (server-side authorization) and G2.6 (input validation) were reviewed route
 
 | | Level | What stands in the way |
 | --- | --- | --- |
-| Now (Nov 11) | L2 | Every L2 gate passes: G2.7 (Lab 3), G2.4 (Lab 9), G2.3 (Lab 5, local), G2.1 and G2.6 (Nov 11 review, findings fixed). L3 is held by G3.3 (uptime), G3.4, G3.6, G3.7, G3.8 |
-| After Arc 1 (Nov 12) | L2 | G3.3 (uptime), G3.4, G3.6, G3.7, G3.8 |
-| First deploy | L3 target | Nothing open: ABUSE-001's acceptance ends and its fix is due the same day |
+| Now (Nov 19) | L2 | G3.7 passes after Lab 11. L3 is held by G3.3 (uptime), G3.4 (pipeline and rollback), G3.6 (dependency checks) and G3.8 (no second reviewer; the agent has no identity of its own) |
+| Gate 1: first deploy (Tue Nov 24) | L2 | Pipeline that can roll back, ABUSE-001 confirmed on the deployed app, `vercel_production` rotated |
+| Gate 2: first real customer | L3 target | Everything in the Gate 2 table closed |
 
 ## Sign-off
 
@@ -84,3 +99,4 @@ Maps to: NIST 800-53 RA-3, RA-7 and CA-5 (plan of action and milestones); ISO 27
 - Nov 11: Lab 5 set RTO 4 hours and RPO 24 hours (committed before the drill), seeded every Tidewater table with `@example.com` dummy data, and restored a `pg_dump` of the local database into an empty scratch database: 64 of 64 tables matched on row count, the 9 Tidewater tables on content, and 70 RLS flags, policies, triggers, functions and grants were identical. DATA-001 and DATA-002 closed for the local database; the hosted re-drill stays as the note under "Fix before first deploy". Three days past the Nov 8 due date. The "Now" row under "Where this leaves the level" brought up to date: it still listed G2.4 and G2.7, closed by Labs 9 and 3.
 - Nov 11: the phase 2 review of G2.1 and G2.6 covered all 19 server actions, 4 route handlers and direct writes through the Supabase Data API. Both gates fail on one path each: AUTHZ-001 (a member can delete other people's notes by deleting the client) and VALID-001 (the Data API accepts values the zod schemas reject). Both added to "Fix during Arc 1" with a proposed Nov 12 due date. OBS-004 recorded as closed on Nov 10 ("Prevent storing of IP addresses" turned on in the Sentry project), and the Lab 9 Sentry auth token as revoked the same day, both as reported by the owner. OBS-001 and OBS-002 rows marked closed, as the Nov 10 entry already said. Re-audit: `audit/findings.json` brought up to date and the baseline script re-run (`audit/evidence/rerun-2026-11-11/`).
 - Nov 11 (later): AUTHZ-001 and VALID-001 fixed in one pull request (migration `20261111000100`). Client deletion is now owner-only, in the RLS policy and in the action. Check constraints now mirror the zod format rules for website, email and phone; existing rows were checked against them first and all passed. Database tests show a member's delete is refused, the probe values are refused, and the database agrees with zod on 28 sample values. The two probes were re-run as "after" evidence. G2.1 and G2.6 pass, so the level is now L2.
+- Nov 19: Lab 11. Secrets moved to Vercel (project `tidewater`, no Git integration, nothing deployed): each secret a Secret-type variable, added separately for Production and Preview. The app moved to Supabase publishable and secret keys and refuses legacy keys. The owner created the two Supabase secret keys (`vercel_production`, `vercel_preview`) and deleted the `default` secret key (the rotation); the agent only read keys and stored them. The owner applied the five migrations to `tidewater-staging` from their own terminal; the agent prepared the commands and verified the history. ABUSE-001 fixed in code (`x-vercel-forwarded-for` on Vercel only). SECRETS-001 and KEYS-001 closed; SECRETS-002 (world-readable `.env.local`) found and closed. The pre-deploy list restructured into Gate 1 (before first deploy) and Gate 2 (before first real customer), with AGENT-001 and SECRETS-003 added under Gate 2.
