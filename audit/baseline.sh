@@ -77,7 +77,7 @@ summary "G2.7 CI workflow valid" "$( [ $rc -eq 0 ] && echo "valid ($tool)" || ec
 summary "G2.7 / G3.8 git remote" "$(git remote | tr '\n' ' ' | sed 's/^$/none: branch protection cannot exist yet/')"
 
 # G1.2 / G3.9: run the production build and probe it signed out
-APP_URL="http://localhost:$PORT" NEXT_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321" NEXT_PUBLIC_SUPABASE_ANON_KEY="dummy" \
+APP_URL="http://localhost:$PORT" NEXT_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321" NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="sb_publishable_dummy" \
   npx next start -p "$PORT" >"$OUT/next-start.log" 2>&1 &
 SERVER=$!; sleep 8
 curl -sI "http://localhost:$PORT/" >"$OUT/headers.txt"

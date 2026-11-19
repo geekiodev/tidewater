@@ -1,5 +1,6 @@
 import "server-only";
 import { createHash } from "node:crypto";
+import { isIP } from "node:net";
 import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { reportError } from "@/lib/errors/report";
@@ -42,13 +43,21 @@ export async function hitRateLimit(rule: RateLimitRule, identifier: string): Pro
 }
 
 /**
- * Best-effort client IP. Assumes the app runs behind a proxy/load balancer
- * that sets X-Forwarded-For (first entry is the client). Without a trusted
- * proxy this header can be spoofed, which is why logins are also limited per
- * email address.
+ * The client IP for per-IP rate limits, read only from a header the hosting
+ * platform sets and the client can't override (ABUSE-001).
+ *
+ * On Vercel (`VERCEL=1`) that is `x-vercel-forwarded-for`. Vercel documents it
+ * as identical to `x-forwarded-for`, which Vercel overwrites "to prevent IP
+ * spoofing", and, unlike `x-forwarded-for`, it stays correct if another proxy
+ * is put in front of Vercel (https://vercel.com/docs/headers/request-headers).
+ *
+ * `X-Forwarded-For` and `X-Real-IP` are never read: a client can send them.
+ * Off Vercel there is no trusted header, so every request gets the same
+ * "unknown" bucket; per-email login limits still apply.
  */
 export async function clientIp(): Promise<string> {
+  if (process.env.VERCEL !== "1") return "unknown";
   const h = await headers();
-  const forwarded = h.get("x-forwarded-for")?.split(",")[0]?.trim();
-  return forwarded || h.get("x-real-ip") || "unknown";
+  const ip = h.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ?? "";
+  return isIP(ip) ? ip : "unknown";
 }
