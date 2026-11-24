@@ -5,6 +5,7 @@ export default function LandingPage() {
     <main>
       <section className="auth-box stack">
         <h1>Tidewater</h1>
+        <p className="small">Lab 10 rollback test: this line is the "bad" release and should disappear when production is rolled back.</p>
         <p>
           A lightweight CRM for small agencies. Keep your clients, their people
           and your notes in one place, and get a quick brief on any account
