@@ -1,0 +1,36 @@
+# ABUSE-001 live test against https://tidewater-bice.vercel.app, run af945d, started 2026-11-24T15:35:04Z
+# Each attempt: a different non-existent @example.com address and a fixed dummy password.
+## Phase 1: no forged headers, until the per-IP limit (20 per 15 minutes) refuses an attempt
+2026-11-24T15:35:05Z  #01  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:06Z  #02  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:07Z  #03  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:07Z  #04  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:08Z  #05  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:10Z  #06  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:11Z  #07  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:11Z  #08  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:12Z  #09  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:13Z  #10  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:14Z  #11  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:15Z  #12  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:16Z  #13  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:17Z  #14  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:17Z  #15  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:18Z  #16  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:19Z  #17  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:20Z  #18  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:20Z  #19  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:21Z  #20  forged IP: none            HTTP 200  allowed (wrong password)
+2026-11-24T15:35:22Z  #21  forged IP: none            HTTP 200  LIMITED
+## Phase 2: a new forged X-Forwarded-For, X-Real-IP and x-vercel-forwarded-for on every attempt
+2026-11-24T15:35:22Z  #22  forged IP: 198.51.100.1, 203.0.113.195   HTTP 200  LIMITED
+2026-11-24T15:35:23Z  #23  forged IP: 198.51.100.132, 203.0.113.189  HTTP 200  LIMITED
+2026-11-24T15:35:24Z  #24  forged IP: 198.51.100.207, 203.0.113.67  HTTP 200  LIMITED
+2026-11-24T15:35:25Z  #25  forged IP: 198.51.100.137, 203.0.113.69  HTTP 200  LIMITED
+2026-11-24T15:35:25Z  #26  forged IP: 198.51.100.101, 203.0.113.106  HTTP 200  LIMITED
+2026-11-24T15:35:26Z  #27  forged IP: 198.51.100.58, 203.0.113.121  HTTP 200  LIMITED
+2026-11-24T15:35:27Z  #28  forged IP: 198.51.100.171, 203.0.113.43  HTTP 200  LIMITED
+2026-11-24T15:35:28Z  #29  forged IP: 198.51.100.150, 203.0.113.168  HTTP 200  LIMITED
+2026-11-24T15:35:28Z  #30  forged IP: 198.51.100.104, 203.0.113.202  HTTP 200  LIMITED
+2026-11-24T15:35:29Z  #31  forged IP: 198.51.100.71, 203.0.113.40   HTTP 200  LIMITED
+## Result: 10 of 10 forged-header attempts were still limited (spoofing does NOT change the bucket), finished 2026-11-24T15:35:30Z

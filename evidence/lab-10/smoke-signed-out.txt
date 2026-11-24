@@ -1,0 +1,32 @@
+# Signed-out smoke test of https://tidewater-bice.vercel.app, 2026-11-24T14:19:45Z. Deployment dpl_4v8CQqRj4cyNdRAqvoP3qMx5ux1p (redeploy of main 177aead with APP_URL and STRIPE_WEBHOOK_SECRET).
+
+## GET /api/health
+{"status":"ok","checks":{"app":"ok","database":"ok"}}  HTTP 200
+
+## Security headers on GET /
+HTTP/2 200 
+content-security-policy: default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'nonce-…'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://checkout.stripe.com https://billing.stripe.com; frame-ancestors 'none'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests
+permissions-policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+referrer-policy: strict-origin-when-cross-origin
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-frame-options: DENY
+
+## Protected routes, signed out
+GET /clients                                       HTTP 307 -> https://tidewater-bice.vercel.app/login?next=%2Fclients
+GET /clients/00000000-0000-0000-0000-000000000000  HTTP 307 -> https://tidewater-bice.vercel.app/login?next=%2Fclients%2F00000000-0000-0000-0000-000000000000
+GET /settings/team                                 HTTP 307 -> https://tidewater-bice.vercel.app/login?next=%2Fsettings%2Fteam
+GET /settings/billing                              HTTP 307 -> https://tidewater-bice.vercel.app/login?next=%2Fsettings%2Fbilling
+GET /onboarding                                    HTTP 307 -> https://tidewater-bice.vercel.app/login?next=%2Fonboarding
+POST /api/clients/<id>/brief                       HTTP 401
+
+## Public pages
+GET /                                              HTTP 200
+GET /login                                         HTTP 200
+GET /signup                                        HTTP 200
+
+## Cross-site POST (CSRF)
+POST /login, Origin: https://evil.example          HTTP 403
+
+## Stripe webhook without a signature
+POST /api/stripe/webhook (no stripe-signature)     {"received":false,"error":"missing signature"} HTTP 400

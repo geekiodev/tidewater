@@ -10,7 +10,7 @@
 | Accepted by | @geekiodev |
 | Accepted on | Nov 5, 2026 |
 | Expires | First deploy, or Dec 31, 2026, whichever comes first |
-| Status | **Fix merged Nov 19, 2026 (Lab 11). The acceptance closes at first deploy (planned Tue Nov 24)**, once the deployed app is confirmed to ignore spoofed headers |
+| Status | **Closed Nov 24, 2026.** Fix merged Nov 19 (Lab 11); confirmed on the deployed app at first deploy (Lab 10) |
 
 ## The risk
 
@@ -74,3 +74,16 @@ The page doesn't say in so many words that a client-sent `x-vercel-forwarded-for
 
 - Send requests to the deployed app with a forged `X-Forwarded-For` and a forged `x-vercel-forwarded-for`. Confirm that the IP the app uses for rate limiting is the real client's.
 - Check whether Supabase Auth's own rate limits see the real client IP (the existing condition above).
+
+## Closed, Nov 24, 2026: confirmed on the deployed app
+
+Lab 10 ran `labs/10-first-deploy/abuse-001-live-test.py` against https://tidewater-bice.vercel.app from the owner's machine. Evidence: `evidence/lab-10/abuse-001-live.txt`.
+
+- **Phase 1:** 20 login attempts, each for a different non-existent `@example.com` address, were allowed (wrong password). Attempt 21 was refused with "Too many attempts". That is the per-IP limit of 20 per 15 minutes; the per-email limit never applied.
+- **Phase 2:** 10 more attempts, each with a new forged `X-Forwarded-For`, `X-Real-IP` and `x-vercel-forwarded-for`. **All 10 were still refused.** If the app had trusted any of those headers, each attempt would have landed in a fresh bucket and been allowed.
+- **That the live app is on the Vercel path:** the Vercel project exposes system environment variables to deployments (`autoExposeSystemEnvs: true`), and `VERCEL` is available "at both build and runtime" (https://vercel.com/docs/environment-variables/system-environment-variables). So `clientIp()` read `x-vercel-forwarded-for`, which Vercel set and the forged value didn't override.
+- **Not checked:** the hashed bucket names in the hosted database. Querying the database is outside the agent's access by the owner's choice.
+
+**Supabase Auth's own rate limits** (the remaining condition) see the Vercel server's IP, not the client's, because Tidewater calls Supabase Auth from the server. They limit Tidewater as a whole and are not a per-client control. That's recorded here; nothing to fix.
+
+The acceptance is closed. No residual risk remains accepted under ABUSE-001.
